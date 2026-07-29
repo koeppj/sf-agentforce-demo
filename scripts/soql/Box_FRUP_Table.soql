@@ -1,0 +1,3 @@
+SELECT Id, box__Box_user__c, box__CollaborationID__c, box__Folder_ID__c, box__New_Permission__c, box__Permission__c, box__Record_ID__c, box__Retry_Count__c, box__Salesforce_User__c, box__Object_Name__c, box__BOSS_Action__c, box__BOSS_Status__c
+  FROM box__FRUP__c
+  WHERE box__Record_ID__c = '500gK00001A3X1PQAV'

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>The Case Team Assignment object records Salesforce User access roles on a Case as a child of Case. It captures Case, Assigned User (required), Role (Editor or Viewer only), and a unique internal Case User Key. Commonly used for Case collaboration management and guided team administration.</description>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Case Team Assignment</label>
+    <nameField>
+        <displayFormat>CTA-{00000}</displayFormat>
+        <label>Assignment Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Case Team Assignments</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <visibility>Public</visibility>
+</CustomObject>

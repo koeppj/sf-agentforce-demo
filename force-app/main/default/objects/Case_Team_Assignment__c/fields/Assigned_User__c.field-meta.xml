@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Assigned_User__c</fullName>
+    <label>Assigned User</label>
+    <description>The active Salesforce User assigned to the Case.</description>
+    <inlineHelpText>Select an active Salesforce User to add to the Case team.</inlineHelpText>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <lookupFilter>
+        <active>true</active>
+        <description>Only active Salesforce Users may be assigned.</description>
+        <filterItems>
+            <field>User.IsActive</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </filterItems>
+        <isOptional>false</isOptional>
+    </lookupFilter>
+    <referenceTo>User</referenceTo>
+    <relationshipName>AssignedUser</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

@@ -17,6 +17,6 @@
     </lookupFilter>
     <referenceTo>User</referenceTo>
     <relationshipName>AssignedUser</relationshipName>
-    <required>false</required>
+    <required>true</required>
     <type>Lookup</type>
 </CustomField>

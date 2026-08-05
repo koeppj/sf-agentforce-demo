@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Assigned_User_Required</fullName>
-    <active>true</active>
-    <description>Requires every Case Team Assignment to identify an assigned Salesforce User.</description>
-    <errorConditionFormula>ISBLANK(Assigned_User__c)</errorConditionFormula>
-    <errorDisplayField>Assigned_User__c</errorDisplayField>
-    <errorMessage>Choose an active Salesforce User for this Case Team Assignment.</errorMessage>
-</ValidationRule>

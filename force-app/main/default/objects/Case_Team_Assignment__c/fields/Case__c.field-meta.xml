@@ -6,9 +6,8 @@
     <inlineHelpText>Select the Case for this assignment. An assignment cannot exist without a Case.</inlineHelpText>
     <relationshipLabel>Case Team Assignments</relationshipLabel>
     <relationshipName>CaseTeamAssignments</relationshipName>
-    <relationshipOrder>0</relationshipOrder>
-    <reparentableMasterDetail>false</reparentableMasterDetail>
-    <type>MasterDetail</type>
-    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+    <type>Lookup</type>
     <referenceTo>Case</referenceTo>
 </CustomField>

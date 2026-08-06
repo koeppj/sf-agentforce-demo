@@ -1,0 +1,2 @@
+SELECT Assigned_User__c, Case__c, CreatedById, CreatedDate, Id, IsDeleted, LastModifiedById, LastModifiedDate, Name, OwnerId, Role__c, SystemModstamp
+  FROM Case_Team_Assignment__c

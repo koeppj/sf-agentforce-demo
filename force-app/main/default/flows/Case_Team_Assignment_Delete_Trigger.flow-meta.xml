@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65</apiVersion>
+    <environments>Default</environments>
+    <interviewLabel>Case Team Assignment Delete Trigger</interviewLabel>
+    <label>Case Team Assignment Delete Trigger</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <locationY>50</locationY>
+        <locationX>176</locationX>
+        <name>Publish_Case_Team_Delete_Event</name>
+        <description>Creates and publishes a Case_Team_Delete__e platform event record with the deleted Case_Team_Assignment__c record&apos;s Case__c, Id, and Assigned_User__c field values</description>
+        <label>Publish Case Team Delete Event</label>
+        <inputAssignments>
+            <field>Case_Record_Id__c</field>
+            <value>
+                <elementReference>$Record.Case__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Case_Team_Assignment_Record_Id__c</field>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Salesforce_User_Record_Id__c</field>
+            <value>
+                <elementReference>$Record.Assigned_User__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Case_Team_Delete__e</object>
+    </recordCreates>
+    <start>
+        <locationY>50</locationY>
+        <connector>
+            <targetReference>Publish_Case_Team_Delete_Event</targetReference>
+        </connector>
+        <locationX>50</locationX>
+        <recordTriggerType>Delete</recordTriggerType>
+        <triggerType>RecordBeforeDelete</triggerType>
+        <object>Case_Team_Assignment__c</object>
+    </start>
+    <status>Active</status>
+</Flow>

@@ -77,9 +77,19 @@ Build a screen flow, **Remove Case Team Member**, with an input variable for the
 
 An assignment's role is not editable. To use a different role, remove the User from the Case Team and add them again with the required role.
 
+### Case Team Delete platform event notification
+
+A separate, lower-level automation keeps downstream systems (for example, Box collaborator cleanup) in sync whenever a Case Team Assignment is removed, regardless of which path deletes the record.
+
+- Platform event `Case_Team_Delete__e` (`force-app/main/default/objects/Case_Team_Delete__e/`) is High Volume with `PublishAfterCommit` behavior, and carries three text fields: `Case_Record_Id__c`, `Case_Team_Assignment_Record_Id__c`, and `Salesforce_User_Record_Id__c`.
+- Record-triggered Autolaunched Flow **Case_Team_Assignment_Delete_Trigger** (`force-app/main/default/flows/Case_Team_Assignment_Delete_Trigger.flow-meta.xml`) fires `Before Delete` on `Case_Team_Assignment__c`. For each deleted record it creates one `Case_Team_Delete__e` event populated from the record about to be deleted: `Case_Record_Id__c` from `Case__c`, `Case_Team_Assignment_Record_Id__c` from `Id`, and `Salesforce_User_Record_Id__c` from `Assigned_User__c`.
+- This flow has no screens and does not gate on user confirmation; it runs for any deletion of a `Case_Team_Assignment__c` record, including deletions performed by the Remove Case Team Member flow above.
+- The final removal step is a Platform Event-triggered Flow on `Case_Team_Delete__e`. It queries `box__FRUP__c` for the event's Case and Salesforce User IDs: `SELECT box__CollaborationID__c FROM box__FRUP__c WHERE box__Record_ID__c = <event Case Record ID> AND box__Salesforce_User__c = <event Salesforce User Record ID>`. It loops through the results and invokes `box.Toolkit.deleteCollaboration` for every nonblank collaboration ID.
+- The subscriber Flow performs no work when no matching FRUP record exists or a matching record has no collaboration ID. Because the event is published after commit, Box cleanup is attempted only for a successful Case Team Assignment deletion.
+
 ### Scope boundary
 
-This work does not modify or invoke `Box_Assign_Case_Collaborator.flow-meta.xml`. The existing Box collaboration flow remains independent and will be handled in a separate step. The Add and Remove flows create and delete only `Case_Team_Assignment__c` records.
+This work does not modify `Box_Assign_Case_Collaborator.flow-meta.xml`. The existing Box collaboration-creation flow remains independent; the new Platform Event-triggered Flow performs only Box collaboration removal for deleted Case Team Assignments.
 
 ## Validation and acceptance criteria
 
@@ -91,6 +101,7 @@ This work does not modify or invoke `Box_Assign_Case_Collaborator.flow-meta.xml`
 6. A user without edit access to a Case cannot change its team membership, and no user can edit an existing assignment through the delivered permissions or actions.
 7. Deleting a Case cascades to its Case Team Assignments.
 8. Validate source with `sf project deploy validate` and verify the related-list flow actions, role values, duplicate handling, permissions, and both flow paths in a sandbox before deployment.
+9. Delete an assignment with a matching `box__FRUP__c` collaboration record and verify the Platform Event-triggered Flow calls `box.Toolkit.deleteCollaboration` once for every matching nonblank `box__CollaborationID__c`.
 
 ## Delivery order and status
 
@@ -101,6 +112,8 @@ This work does not modify or invoke `Box_Assign_Case_Collaborator.flow-meta.xml`
 5. **Pending:** Add the Case Team Assignments related list and the two flow-launch actions to the Case Lightning record page. The record-page changes are owned by the page configurator.
 6. **Paused, needs manual cleanup:** The `execute_metadata_action` Flow-generation service is now available; see `FLOW_GENERATION_SERVICE_REQUIREMENT.md` for history. The **Add Case Team Member** flow (`Add_Case_Team_Member.flow-meta.xml`) was built, fixed, validated, and deployed to `agentforce-demo`, but was then targeted for removal. Deletion via `sf project delete source`, via an Obsolete-status redeploy, and via an explicit `destructiveChanges.xml` deploy all failed identically with `insufficient access rights on cross-reference id` (likely a permission gap for the deploying user against the flow's `UserRecordAccess` query). Current state: the flow is deployed to `agentforce-demo` with `Status=Obsolete` (deactivated, cannot run), and the local file still exists at the path above with `<status>Obsolete</status>`. **Manual action needed:** delete the flow from the org via Setup → Flows (or grant broader access and retry `sf project delete source --metadata Flow:Add_Case_Team_Member`), and delete/restore the local file as desired. Known gaps noted during the build (relevant only if this flow is revived instead of deleted): the Role screen field only offered the Editor choice, not Viewer, and the flow's display label read "Start Screen Flow" instead of "Add Case Team Member". **Pending:** Build and test the Remove Case Team Member flow.
 7. **Pending:** Add flow-access entries to `Case_Team_Assignment_Manager` for both flows, deploy the updated permission set, then run the acceptance tests above.
+8. **Completed:** Confirmed the `execute_metadata_action` Flow-generation pipeline is now callable (the `mcp__salesforce_metadata_experts__execute_metadata_action` tool), resolving the blocker described in `FLOW_GENERATION_SERVICE_REQUIREMENT.md`. Used it to generate, fix (`RecordBeforeDelete` requires an explicit `recordTriggerType`), validate, and deploy the **Case_Team_Assignment_Delete_Trigger** record-triggered flow (`Before Delete` on `Case_Team_Assignment__c`) described under [Case Team Delete platform event notification](#case-team-delete-platform-event-notification). Also deployed the previously-local `Case_Team_Delete__e` platform event object and its three fields to `agentforce-demo`. Status: Active. This confirms the pipeline works and can be reused to build the still-pending Add and Remove Case Team Member flows.
+9. **Completed:** The Platform Event-triggered Flow was built manually in `agentforce-demo` and retrieved into this project as `Process_Delete_Case_Team_Deletion_Event` (`Process Delete Case Team Deletion Event`). It triggers on `Case_Team_Delete__e`, finds matching `box__FRUP__c` records with nonblank collaboration IDs, and calls `box__DeleteCollaboration_v2` for each record.
 
 ## Access decision
 

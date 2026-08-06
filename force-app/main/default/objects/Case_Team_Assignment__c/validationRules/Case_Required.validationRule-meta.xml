@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Case_Required</fullName>
+    <active>true</active>
+    <description>Requires every Case Team Assignment to remain associated with a Case while allowing the lookup field to be omitted from the record-entry layout.</description>
+    <errorConditionFormula>ISBLANK(Case__c)</errorConditionFormula>
+    <errorMessage>A Case Team Assignment must be associated with a Case.</errorMessage>
+</ValidationRule>

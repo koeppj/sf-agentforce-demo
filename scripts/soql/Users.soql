@@ -1,0 +1,2 @@
+SELECT Id, Alias, FirstName, LastName, Email
+  FROM User

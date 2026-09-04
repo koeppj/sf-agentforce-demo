@@ -1,0 +1,10 @@
+SELECT RecordId,
+       HasReadAccess,
+       HasEditAccess,
+       HasDeleteAccess,
+       HasTransferAccess,
+       HasAllAccess,
+       MaxAccessLevel
+FROM UserRecordAccess
+WHERE UserId = '005gK000074cosVQAQ'
+AND RecordId = '500gK00001HmDzxQAF'

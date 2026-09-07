@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>HR_Request_Schema_Version__c</fullName>
+    <label>HR Request Schema Version</label>
+    <description>Exact schema version (e.g. 1.0) selected at Case creation. Audit pointer only; never contains request data.</description>
+    <inlineHelpText>Set by the intake Flow from a fixed schema constant. Do not populate from user input.</inlineHelpText>
+    <length>10</length>
+    <required>false</required>
+    <type>Text</type>
+</CustomField>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>HR_Integration_Status__c</fullName>
+    <label>HR Integration Status</label>
+    <description>Non-sensitive orchestration status for the HR intake/Doc Gen workflow. Never derived from or containing request field values.</description>
+    <inlineHelpText>Set by the intake and status-refresh Flows only.</inlineHelpText>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Case Created</fullName>
+                <default>true</default>
+                <label>Case Created</label>
+            </value>
+            <value>
+                <fullName>Doc Gen Submitted</fullName>
+                <default>false</default>
+                <label>Doc Gen Submitted</label>
+            </value>
+            <value>
+                <fullName>Doc Gen Processing</fullName>
+                <default>false</default>
+                <label>Doc Gen Processing</label>
+            </value>
+            <value>
+                <fullName>Document Generated</fullName>
+                <default>false</default>
+                <label>Document Generated</label>
+            </value>
+            <value>
+                <fullName>Folder Failed</fullName>
+                <default>false</default>
+                <label>Folder Failed</label>
+            </value>
+            <value>
+                <fullName>Doc Gen Submit Failed</fullName>
+                <default>false</default>
+                <label>Doc Gen Submit Failed</label>
+            </value>
+            <value>
+                <fullName>Submission Unknown</fullName>
+                <default>false</default>
+                <label>Submission Unknown</label>
+            </value>
+            <value>
+                <fullName>Doc Gen Failed</fullName>
+                <default>false</default>
+                <label>Doc Gen Failed</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>One allow-listed JSON leaf path for a parent HR_DocGen_Schema__mdt version. Defines type, requiredness, blank handling, and limits used by the generic Apex validator. Contains no submitted request values.</description>
+    <label>HR Doc Gen Field</label>
+    <pluralLabel>HR Doc Gen Fields</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

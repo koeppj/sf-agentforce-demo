@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Json_Path__c</fullName>
+    <label>Json Path</label>
+    <description>Exact allow-listed path used by Flow, Apex, and the Box template, for example employee.firstName.</description>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+</CustomField>

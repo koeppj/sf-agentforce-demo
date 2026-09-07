@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Schema__c</fullName>
+    <label>Schema</label>
+    <description>Enforces the parent schema-version relationship for this field definition.</description>
+    <required>true</required>
+    <type>MetadataRelationship</type>
+    <referenceTo>HR_DocGen_Schema__mdt</referenceTo>
+    <relationshipLabel>HR Doc Gen Fields</relationshipLabel>
+    <relationshipName>HR_DocGen_Fields</relationshipName>
+</CustomField>

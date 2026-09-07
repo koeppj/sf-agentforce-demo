@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Output_File_Name_Pattern__c</fullName>
+    <label>Output File Name Pattern</label>
+    <description>Generic filename pattern allowing only non-sensitive tokens, for example HR Request - {caseNumber}.</description>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+</CustomField>

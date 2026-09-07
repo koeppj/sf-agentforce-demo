@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>HR_Request_Schema_Key__c</fullName>
+    <label>HR Request Schema Key</label>
+    <description>Non-sensitive contract key (e.g. newHire) used for this HR intake request. Audit pointer only; never contains request data.</description>
+    <inlineHelpText>Set by the intake Flow from a fixed schema constant. Do not populate from user input.</inlineHelpText>
+    <length>40</length>
+    <required>false</required>
+    <type>Text</type>
+</CustomField>

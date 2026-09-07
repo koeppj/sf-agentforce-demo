@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Request_Type__c</fullName>
+    <label>Request Type</label>
+    <description>Non-sensitive administrative label, for example New Hire/Rehire.</description>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+</CustomField>

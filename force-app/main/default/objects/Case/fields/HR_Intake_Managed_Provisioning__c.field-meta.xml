@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>HR_Intake_Managed_Provisioning__c</fullName>
+    <label>HR Intake Managed Provisioning</label>
+    <description>True when this Case's Box folder was provisioned synchronously by the HR intake Flow, so competing automatic folder-provisioning automation excludes it.</description>
+    <inlineHelpText>Set by the intake Flow when the Case shell is created. Do not edit manually.</inlineHelpText>
+    <defaultValue>false</defaultValue>
+    <required>false</required>
+    <type>Checkbox</type>
+</CustomField>

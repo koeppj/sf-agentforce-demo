@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Box_Folder_Template_Id__c</fullName>
+    <label>Box Folder Template Id</label>
+    <description>Opaque Box folder-template ID used by the intake Flow to provision the Case folder.</description>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+</CustomField>

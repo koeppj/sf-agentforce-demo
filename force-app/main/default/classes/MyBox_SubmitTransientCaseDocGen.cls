@@ -17,19 +17,19 @@ public with sharing class MyBox_SubmitTransientCaseDocGen {
     private static MyBox_DocGenBoxAdapter adapter = new MyBox_DocGenBoxAdapterImpl();
 
     public class Request {
-        @InvocableVariable(required=true)
+        @InvocableVariable(required=true label='Case Id')
         public Id caseId;
 
-        @InvocableVariable(required=true)
+        @InvocableVariable(required=true label='Box Folder Id')
         public String boxFolderId;
 
-        @InvocableVariable(required=true)
+        @InvocableVariable(required=true label='Schema Key')
         public String schemaKey;
 
-        @InvocableVariable(required=true)
+        @InvocableVariable(required=true label='Schema Version')
         public String schemaVersion;
 
-        @InvocableVariable(required=true)
+        @InvocableVariable(required=true label='Field Values')
         public List<MyBox_DocGenFieldValue> fieldValues;
 
         public Request() {
@@ -37,13 +37,13 @@ public with sharing class MyBox_SubmitTransientCaseDocGen {
     }
 
     public class Response {
-        @InvocableVariable
+        @InvocableVariable(label='Batch Id')
         public String batchId;
 
-        @InvocableVariable
+        @InvocableVariable(label='Status')
         public String status;
 
-        @InvocableVariable
+        @InvocableVariable(label='Error Code')
         public String errorCode;
 
         public Response() {
@@ -53,6 +53,8 @@ public with sharing class MyBox_SubmitTransientCaseDocGen {
     @InvocableMethod(
         label='Submit Transient Case Doc Gen'
         description='Validates and synchronously submits a transient HR intake Doc Gen request for an intake-managed Case. Performs one Box callout; start a new transaction on this action.'
+        category='MyBox'
+        callout=true
     )
     public static List<Response> submit(List<Request> requests) {
         List<Response> results = new List<Response>();

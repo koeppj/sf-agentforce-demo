@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fields="Schema__c,Json_Path__c,Value_Type__c,Required__c,Blank_Behavior__c,Sequence__c">
-    <label>MyBox_Test_Harness_Collision_1_0 - employee</label>
+    <label>HC1.0 employee</label>
     <protected>false</protected>
     <values>
         <field>Schema__c</field>

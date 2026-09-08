@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fields="Schema__c,Json_Path__c,Value_Type__c,Required__c,Blank_Behavior__c,Sequence__c,Classification__c">
-    <label>NewHire 1.0 - assignment.status</label>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fields="Schema__c,Json_Path__c,Value_Type__c,Required__c,Blank_Behavior__c,Sequence__c,Classification__c,Max_Length__c,Allowed_Values__c">
+    <label>NH1.0 assignment.status</label>
     <protected>false</protected>
     <values>
         <field>Schema__c</field>
@@ -29,5 +29,13 @@
     <values>
         <field>Classification__c</field>
         <value xsi:type="xsd:string">Operational</value>
+    </values>
+    <values>
+        <field>Max_Length__c</field>
+        <value xsi:type="xsd:double">80</value>
+    </values>
+    <values>
+        <field>Allowed_Values__c</field>
+        <value xsi:type="xsd:string">["New Hire","Rehire","Transfer","Promotion"]</value>
     </values>
 </CustomMetadata>

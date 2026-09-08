@@ -16,7 +16,7 @@ public with sharing class MyBox_GetCaseDocGenStatus {
     private static MyBox_DocGenBoxAdapter adapter = new MyBox_DocGenBoxAdapterImpl();
 
     public class Request {
-        @InvocableVariable(required=true)
+        @InvocableVariable(required=true label='Case Id')
         public Id caseId;
 
         public Request() {
@@ -24,13 +24,13 @@ public with sharing class MyBox_GetCaseDocGenStatus {
     }
 
     public class Response {
-        @InvocableVariable
+        @InvocableVariable(label='Status')
         public String status;
 
-        @InvocableVariable
+        @InvocableVariable(label='Output File Id')
         public String outputFileId;
 
-        @InvocableVariable
+        @InvocableVariable(label='Error Code')
         public String errorCode;
 
         public Response() {
@@ -40,6 +40,8 @@ public with sharing class MyBox_GetCaseDocGenStatus {
     @InvocableMethod(
         label='Get Case Doc Gen Status'
         description='Returns a normalized Doc Gen status for an authorized, intake-managed Case without exposing raw Box response data. Performs one Box callout.'
+        category='MyBox'
+        callout=true
     )
     public static List<Response> getStatus(List<Request> requests) {
         List<Response> results = new List<Response>();

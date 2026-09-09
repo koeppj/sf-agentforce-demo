@@ -1,0 +1,48 @@
+{
+  "schema": {
+    "key": "newHire",
+    "version": "1.0"
+  },
+  "case": {
+    "id": "500gK00000EXAMPLE",
+    "caseNumber": "00001042"
+  },
+  "request": {
+    "requestDate": "2026-09-09",
+    "notificationType": "newHireRehire"
+  },
+  "employee": {
+    "employeeId": "E-10042",
+    "firstName": "Jordan",
+    "lastName": "Rivera"
+  },
+  "assignment": {
+    "region": "Central",
+    "district": "District 4",
+    "station": "Station 12",
+    "startDate": "2026-10-05",
+    "isRehire": false,
+    "primaryTitle": "Paramedic",
+    "isDualRole": false,
+    "department": "Operations",
+    "status": "New Hire",
+    "manager": "Alex Morgan",
+    "employmentStatus": "Full Time"
+  },
+  "certification": {
+    "level": "EMT-Paramedic",
+    "txdshsNumber": "TX-88421",
+    "priorStateDetails": "NM-44109"
+  },
+  "compensation": {
+    "currentHourlyOrSalary": "Above minimum",
+    "rateReason": "Market adjustment"
+  },
+  "notes": "Synthetic demo notes.\nInclude a second line to check multiline rendering.",
+  "submitter": {
+    "name": "Sam Patel",
+    "jobTitle": "Operations Supervisor",
+    "email": "sam.patel@example.test",
+    "attested": true
+  }
+}

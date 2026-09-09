@@ -1,0 +1,24 @@
+{
+  "forgotPasswordRouteId" : "8cb5ba80-93fc-4ba0-9942-fe6966777048",
+  "isAvailableToGuests" : false,
+  "isFilteredComponentsView" : false,
+  "isProgressiveRenderingEnabled" : false,
+  "loginAppPageId" : "4bd93973-4da8-4a19-ac9e-729d83423e68",
+  "mainAppPageId" : "db45b40d-78b2-4c31-a6ae-d7b92772aef5",
+  "preferredDomain" : "none",
+  "selfRegistrationRouteId" : "0017fec0-9a78-418b-b5d9-184f0a85b47c",
+  "trustedSitesForScript" : [ {
+    "id" : "41b246fd-50e3-4694-a70d-2bef510cd9c3",
+    "isActive" : true,
+    "trustedSiteName" : "Builder URL",
+    "trustedSiteUrl" : "https://orgfarm-d01c8c3fa9-dev-ed.develop.builder.salesforce-experience.com/sfsites",
+    "type" : "trustedSitesForScripts"
+  }, {
+    "id" : "a1341fd3-0870-4b6a-affa-b208ea39fadf",
+    "isActive" : true,
+    "trustedSiteName" : "Portal URL",
+    "trustedSiteUrl" : "https://orgfarm-d01c8c3fa9-dev-ed.develop.my.site.com/portal",
+    "type" : "trustedSitesForScripts"
+  } ],
+  "type" : "site"
+}

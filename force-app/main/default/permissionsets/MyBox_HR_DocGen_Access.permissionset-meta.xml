@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Grants field-level access to the seven non-sensitive HR intake/Doc Gen orchestration fields on Case, required by MyBox_SubmitTransientCaseDocGen and MyBox_GetCaseDocGenStatus, which enforce WITH SECURITY_ENFORCED.</description>
+    <description>Case FLS for HR Doc Gen orchestration fields, plus Apex, Flow, Case create/read, and Run Flow for Experience submitters.</description>
     <label>MyBox HR Doc Gen Access</label>
+    <classAccesses>
+        <apexClass>MyBox_GetCaseDocGenStatus</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MyBox_SubmitTransientCaseDocGen</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <flowAccesses>
+        <enabled>true</enabled>
+        <flow>HR_Check_DocGen_Status</flow>
+    </flowAccesses>
+    <flowAccesses>
+        <enabled>true</enabled>
+        <flow>HR_New_Hire_Intake</flow>
+    </flowAccesses>
     <fieldPermissions>
         <editable>true</editable>
         <field>Case.HR_Request_Schema_Key__c</field>
@@ -37,4 +53,17 @@
         <field>Case.HR_Integration_Error_Code__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>Case</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>RunFlow</name>
+    </userPermissions>
 </PermissionSet>

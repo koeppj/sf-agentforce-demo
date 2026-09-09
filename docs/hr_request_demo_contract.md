@@ -101,7 +101,7 @@ Submission: `MyBox_SubmitTransientCaseDocGen` — inputs `caseId`, `boxFolderId`
 
 Status: `MyBox_GetCaseDocGenStatus` — input `caseId`; outputs `status`, `outputFileId`, `errorCode`. Null `status` means preserve prior Case status.
 
-Schema selectors for the primary Flow: constants `cSchemaKey` = `newHire`, `cSchemaVersion` = `1.0`. Schema record `HR_DocGen_Schema.NewHire_1_0` stays **Draft** until chunk 6 writes Box template IDs.
+Schema selectors for the primary Flow: constants `cSchemaKey` = `newHire`, `cSchemaVersion` = `1.0`. Schema record `HR_DocGen_Schema.NewHire_1_0` is **Active**. Template file ID `2456566806586`, version ID `2724134783386` are in source XML and in the org.
 
 ### Integration status allow-list
 
@@ -125,4 +125,4 @@ Numeric JSON is proven in harness tests (`compensation.rateAmount` on the test s
 | Types | `force-app/main/default/objects/HR_DocGen_Schema__mdt/`, `HR_DocGen_Field__mdt/` |
 | Case fields | `force-app/main/default/objects/Case/fields/HR_*` and `Box_DocGen_*` |
 
-Draft Flows `HR_New_Hire_Intake` and `HR_Check_DocGen_Status` implement this checklist in org/source (see [hr_request_demo_status.md](hr_request_demo_status.md)). Chunk 2 tags the Box template with these paths plus `schema.*` and `case.*`.
+Active Flows `HR_New_Hire_Intake` and `HR_Check_DocGen_Status` implement this checklist in org/source (see [hr_request_demo_status.md](hr_request_demo_status.md)). Chunk 2 Word template is file `2456566806586`, version `2724134783386` ([hr_request_demo_template_manifest.md](hr_request_demo_template_manifest.md)). Synthetic `user_input` for [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches): [examples/newHire_1_0_user_input.json](examples/newHire_1_0_user_input.json).

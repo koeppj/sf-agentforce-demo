@@ -248,7 +248,7 @@
     <formulas>
         <name>fDisplayStatus</name>
         <dataType>String</dataType>
-        <expression>IF(NOT(ISBLANK({!Get_DocGen_Status.status})), {!Get_DocGen_Status.status}, {!Get_Case_By_Id.HR_Integration_Status__c})</expression>
+        <expression>IF(NOT(ISBLANK({!Get_DocGen_Status.status})), {!Get_DocGen_Status.status}, TEXT({!Get_Case_By_Id.HR_Integration_Status__c}))</expression>
     </formulas>
     <formulas>
         <name>fErrorCodeToWrite</name>
@@ -467,7 +467,7 @@
             <targetReference>Enter_Case</targetReference>
         </connector>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
     <variables>
         <name>recordId</name>
         <dataType>String</dataType>

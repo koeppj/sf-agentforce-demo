@@ -32,7 +32,7 @@
     </actionCalls>
     <apiVersion>66.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
-    <description>Creates a Box folder for a new Case with no record type, using Create Folder For Record ID (no template).</description>
+    <description>Creates a Box folder for a new Case with no record type, using Create Folder For Record ID (no template). Excludes intake-managed Cases (HR_Intake_Managed_Provisioning__c = true).</description>
     <environments>Default</environments>
     <interviewLabel>Create Box Folder for New Case {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Create Box Folder for New Case</label>
@@ -52,7 +52,7 @@
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <filterLogic>or</filterLogic>
+        <filterLogic>(1 OR 2) AND 3</filterLogic>
         <filters>
             <field>RecordTypeId</field>
             <operator>EqualTo</operator>
@@ -63,6 +63,13 @@
         <filters>
             <field>RecordTypeId</field>
             <operator>IsNull</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>HR_Intake_Managed_Provisioning__c</field>
+            <operator>NotEqualTo</operator>
             <value>
                 <booleanValue>true</booleanValue>
             </value>

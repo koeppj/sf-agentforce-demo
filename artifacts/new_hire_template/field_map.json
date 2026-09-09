@@ -1,0 +1,272 @@
+[
+  {
+    "name": "request.notificationType",
+    "json_path": "request.notificationType",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 2,
+    "label": "Notification type"
+  },
+  {
+    "name": "request.requestDate",
+    "json_path": "request.requestDate",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 2,
+    "label": "Today's date / request date"
+  },
+  {
+    "name": "employee.employeeId",
+    "json_path": "employee.employeeId",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 2,
+    "label": "Employee ID #"
+  },
+  {
+    "name": "employee.firstName",
+    "json_path": "employee.firstName",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 2,
+    "label": "Employee first name"
+  },
+  {
+    "name": "employee.lastName",
+    "json_path": "employee.lastName",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 2,
+    "label": "Employee last name"
+  },
+  {
+    "name": "assignment.region",
+    "json_path": "assignment.region",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 2,
+    "label": "New region"
+  },
+  {
+    "name": "assignment.district",
+    "json_path": "assignment.district",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 2,
+    "label": "New district"
+  },
+  {
+    "name": "assignment.station",
+    "json_path": "assignment.station",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 2,
+    "label": "New station (or corporate location)"
+  },
+  {
+    "name": "assignment.startDate",
+    "json_path": "assignment.startDate",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 2,
+    "label": "Hire date / start date"
+  },
+  {
+    "name": "assignment.isRehire",
+    "json_path": "assignment.isRehire",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 2,
+    "label": "Rehire?"
+  },
+  {
+    "name": "assignment.primaryTitle",
+    "json_path": "assignment.primaryTitle",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 2,
+    "label": "New primary title"
+  },
+  {
+    "name": "assignment.isDualRole",
+    "json_path": "assignment.isDualRole",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 3,
+    "label": "Will this be a dual role?"
+  },
+  {
+    "name": "assignment.department",
+    "json_path": "assignment.department",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 3,
+    "label": "New department"
+  },
+  {
+    "name": "assignment.status",
+    "json_path": "assignment.status",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 3,
+    "label": "New status"
+  },
+  {
+    "name": "assignment.employmentStatus",
+    "json_path": "assignment.employmentStatus",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 3,
+    "label": "Status (Full Time / PRN)"
+  },
+  {
+    "name": "assignment.manager",
+    "json_path": "assignment.manager",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 3,
+    "label": "New manager"
+  },
+  {
+    "name": "certification.level",
+    "json_path": "certification.level",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 3,
+    "label": "Certification level"
+  },
+  {
+    "name": "certification.txdshsNumber",
+    "json_path": "certification.txdshsNumber",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 3,
+    "label": "TXDSHS certification #"
+  },
+  {
+    "name": "certification.priorStateDetails",
+    "json_path": "certification.priorStateDetails",
+    "type": "text",
+    "multiline": true,
+    "required": false,
+    "page": 3,
+    "label": "Prior certification # / state"
+  },
+  {
+    "name": "compensation.currentHourlyOrSalary",
+    "json_path": "compensation.currentHourlyOrSalary",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 3,
+    "label": "Current hourly / salary"
+  },
+  {
+    "name": "compensation.rateReason",
+    "json_path": "compensation.rateReason",
+    "type": "text",
+    "multiline": true,
+    "required": false,
+    "page": 3,
+    "label": "New hire rate reason"
+  },
+  {
+    "name": "notes",
+    "json_path": "notes",
+    "type": "text",
+    "multiline": true,
+    "required": false,
+    "page": 4,
+    "label": "Notes"
+  },
+  {
+    "name": "submitter.name",
+    "json_path": "submitter.name",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 4,
+    "label": "Person completing form"
+  },
+  {
+    "name": "submitter.jobTitle",
+    "json_path": "submitter.jobTitle",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 4,
+    "label": "Person completing form job title"
+  },
+  {
+    "name": "submitter.email",
+    "json_path": "submitter.email",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 4,
+    "label": "Person completing form email address"
+  },
+  {
+    "name": "submitter.attested",
+    "json_path": "submitter.attested",
+    "type": "text",
+    "multiline": false,
+    "required": true,
+    "page": 4,
+    "label": "Information reviewed and authorized"
+  },
+  {
+    "name": "case.caseNumber",
+    "json_path": "case.caseNumber",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 4,
+    "label": "Case number"
+  },
+  {
+    "name": "case.id",
+    "json_path": "case.id",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 4,
+    "label": "Case ID"
+  },
+  {
+    "name": "schema.key",
+    "json_path": "schema.key",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 4,
+    "label": "Schema key"
+  },
+  {
+    "name": "schema.version",
+    "json_path": "schema.version",
+    "type": "text",
+    "multiline": false,
+    "required": false,
+    "page": 4,
+    "label": "Version"
+  }
+]

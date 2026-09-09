@@ -6,7 +6,7 @@ Build an authenticated Experience Cloud Screen Flow for the New Hire/Rehire inta
 
 Salesforce must not persist request-subject PII or sensitive HR data. This includes names, employee identifiers, SSNs, birth dates, addresses, email addresses, compensation, certification details, notes, the complete form payload, and values derived from those fields. No custom Salesforce object will store request data. Box is the system of record for the generated document and supporting files.
 
-The design uses Box for Salesforce 5.53 already installed in the org. Box's native record-based Doc Gen action will not be used because there is deliberately no Salesforce record containing the merge data. A schema-neutral Apex action will construct the payload in memory and call `box.DocGenToolkit.submitDocGenBatch`, which supports arbitrary JSON input through the [Box Doc Gen batch API](https://developer.box.com/guides/docgen/generate-document).
+The design uses Box for Salesforce 5.56 already installed in the org. Box's native record-based Doc Gen action will not be used because there is deliberately no Salesforce record containing the merge data. A schema-neutral Apex action will construct the payload in memory and submit it through `box.DocGenToolkit.submitDocGenBatch`, which is the Salesforce Toolkit wrapper for the Box Doc Gen operation [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches) (API version `2025.0`). That is the only supported way to generate the request PDF from arbitrary JSON. Do not use Case-field merge, Salesforce Files, or any other Doc Gen entry point.
 
 ## Demo Scope and Acceptance Criteria
 
@@ -42,9 +42,44 @@ Salesforce's Help article [Considerations for the Apex-Defined Data Type](https:
 
 Follow the documented DTO requirements: a top-level class, `@AuraEnabled` fields, and an accessible no-argument constructor. Do not use getter methods or a list-of-lists field on the Apex-defined Flow variable. Apply the invocable annotations to the action contract as described below.
 
-Box's developer guide [Generate documents](https://developer.box.com/guides/docgen/generate-document) accepts JSON in `document_generation_data.user_input`, including nested structures. The payload can vary with the selected schema and does not require a Salesforce record containing merge values. “Flexible” refers to the JSON field structure; Flow still passes the typed descriptor collection, and Apex validates it against the configured contract.
+Box Doc Gen generation is [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches) with header `box-version: 2025.0`. The merge JSON belongs in `document_generation_data[].user_input` (Box's field name on that request; there is no `user_data` property). Nested objects are supported. The payload can vary with the selected schema and does not require a Salesforce record containing merge values. “Flexible” refers to the JSON field structure; Flow still passes the typed descriptor collection, and Apex validates it against the configured contract. The [Generate documents](https://developer.box.com/guides/docgen/generate-document) guide describes the same operation.
 
 Tests cover our field mappings, validation, blank handling, access controls, configured transactions, template output, and error handling. They do not independently re-test whether Salesforce supports the documented primitive types or whether Box accepts JSON. Environment readiness concerns entitlement, authorization, permissions, identifiers, and configuration; the final end-to-end check remains in chunk 6.
+
+#### Box Doc Gen API used by this design
+
+All document-generation work in this demo is the Box Doc Gen API family released in Box API version `2025.0`. Every REST call must send `box-version: 2025.0`. The Salesforce Toolkit methods below are wrappers around these endpoints; they are not a different generation product.
+
+| Operation | REST (correct API) | Salesforce Toolkit |
+| --- | --- | --- |
+| Generate the request PDF from JSON | [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches) | `box.DocGenToolkit.submitDocGenBatch` |
+| Read jobs in an accepted batch | [`GET /2.0/docgen_batch_jobs/{batch_id}`](https://developer.box.com/reference/v2025.0/get-docgen-batch-jobs-id) | `box.DocGenToolkit.getDocGenBatch` |
+| List templates | [`GET /2.0/docgen_templates`](https://developer.box.com/reference/v2025.0/get-docgen-templates) | (CLI / REST; not used at intake runtime) |
+| List tags on a template version | [`GET /2.0/docgen_templates/{template_id}/tags`](https://developer.box.com/reference/v2025.0/get-docgen-templates-id-tags) | Chunk 2 verification only |
+
+`POST /2.0/docgen_batches` required fields are `file`, `input_source` (must be `"api"` for API-based generation), `destination_folder`, `output_type`, and `document_generation_data`. Optional `file_version` pins the approved template version. Each `document_generation_data` entry requires `generated_file_name` and `user_input`. This intake submits **one** entry per Case.
+
+The installed Apex type `box.DocGenRequest` exposes `file`, `file_version`, `destination_folder`, `output_type`, and `document_generation_data` (each entry has `generated_file_name` and `user_input`). It does **not** expose `input_source`; `submitDocGenBatch` supplies `input_source: "api"` when it calls `POST /2.0/docgen_batches`. Do not invent a different Apex property or REST body field for merge data.
+
+A representative generation request (IDs are placeholders):
+
+```json
+{
+  "file": { "id": "<Box_DocGen_Template_File_Id>", "type": "file" },
+  "file_version": { "id": "<Box_DocGen_Template_Version_Id>", "type": "file_version" },
+  "input_source": "api",
+  "destination_folder": { "id": "<Case_Box_Folder_Id>", "type": "folder" },
+  "output_type": "pdf",
+  "document_generation_data": [
+    {
+      "generated_file_name": "HR Request - 00001042",
+      "user_input": { }
+    }
+  ]
+}
+```
+
+The `user_input` object is the nested `newHire/1.0` payload defined under [Runtime use](#runtime-use). Replace the empty object above with [examples/newHire_1_0_user_input.json](examples/newHire_1_0_user_input.json) when authoring or smoke-testing the template. Template tags and publication IDs live in [hr_request_demo_template_manifest.md](hr_request_demo_template_manifest.md).
 
 ## Data Residency and Persistence Boundary
 
@@ -284,8 +319,8 @@ sequenceDiagram
     Flow->>Apex: Case, folder, schema version, typed values
     Apex->>SF: Verify Case/folder access and read schema definitions
     Apex->>Apex: Validate and serialize JSON in memory
-    Apex->>Box: Submit one PDF generation job
-    Box-->>Apex: Accepted batch ID
+    Apex->>Box: POST /2.0/docgen_batches (user_input JSON, output_type pdf)
+    Box-->>Apex: 202 Accepted batch ID
     Apex-->>Flow: Batch ID and sanitized status
     Flow->>Flow: Clear assignable sensitive values
     Flow->>SF: Save batch ID and submission status
@@ -298,7 +333,7 @@ sequenceDiagram
     User->>Refresh: Check document status using Case ID
     Refresh->>SF: Authorize Case and read stored batch ID
     Refresh->>Toolkit: Get Doc Gen batch status
-    Toolkit->>Box: Retrieve status and output details
+    Toolkit->>Box: GET /2.0/docgen_batch_jobs/{batch_id}
     Box-->>Toolkit: Job status and optional output file ID
     Toolkit-->>Refresh: Result normalized to non-sensitive fields
     Refresh->>SF: Save status / opaque output ID only
@@ -330,7 +365,7 @@ Reject another submission for a Case that already has a batch ID or an incompati
 Submission acceptance does not mean the PDF is finished. Provide a separate **Check document status** Screen Flow on the Experience Case page. The receipt links to that page; the user can upload while Box renders and then refresh manually. No scheduler, batch job, timed Flow loop, webhook, or payload-bearing asynchronous action is required.
 
 1. Accept only a Case ID, verify the caller can access this intake Case, and read its stored batch ID. Do not accept arbitrary batch IDs from the browser.
-2. Use the managed `getDocgenBatch` Flow action if its installed outputs and fault behavior can support the non-sensitive contract. Box lists it in [Flow actions](https://developer.box.com/guides/tooling/salesforce-toolkit/flow-actions).
+2. Use the managed `getDocgenBatch` Flow action if its installed outputs and fault behavior can support the non-sensitive contract. Box lists it in [Flow actions](https://developer.box.com/guides/tooling/salesforce-toolkit/flow-actions). That action wraps [`GET /2.0/docgen_batch_jobs/{batch_id}`](https://developer.box.com/reference/v2025.0/get-docgen-batch-jobs-id), not a second generation API.
 3. If those outputs expose raw content/error details or cannot be normalized safely, use one small `GetCaseDocGenStatus` Apex wrapper around `box.DocGenToolkit.getDocGenBatch`. Select the implementation in chunk 5 from the documented action interface and this plan's output contract; do not build both. The wrapper takes Case ID and returns only normalized status, output file ID, and sanitized error code, without DML.
 4. Perform the status callout before any Case update, with transaction control where needed. Flow owns saving the normalized result. Restrict status mutation to eligible intake Cases, retain terminal results, and do not change the submission batch ID.
 5. Map the documented response fields to the single generated document's status/output. Where the response exposes per-job entries, normalize that one job explicitly. Resolve any missing SDK property detail from the package references or class signatures during final implementation.
@@ -359,8 +394,8 @@ Never retrieve the generated content or original `user_input` for status trackin
 | Typed transient handoff | `DocGenFieldValue` descriptors and one collection |
 | Flexible schema and exact version selection | Two Custom Metadata Types and records |
 | Generic validation and nested JSON | Schema-neutral Apex in memory |
-| Arbitrary-payload submission | One custom invocable wrapping the Box Toolkit |
-| Status check | Managed Flow action, or a thin Apex wrapper if the normalized-output contract requires it |
+| Arbitrary-payload submission | One custom invocable wrapping `POST /2.0/docgen_batches` via `box.DocGenToolkit.submitDocGenBatch` |
+| Status check | `GET /2.0/docgen_batch_jobs/{batch_id}` via managed Flow action, or a thin Apex wrapper if the normalized-output contract requires it |
 | Template alignment and schema extension proof | Manual template/tag check, rendering smoke test, and focused Apex tests |
 | Failed submissions and reset | Operator runbook; no resume UI or automatic resubmission |
 
@@ -461,7 +496,7 @@ Restrict metadata changes to the setup/deployment operator and grant runtime acc
 | Schema key/version used for a request | No | `Case.HR_Request_Schema_Key__c` and `Case.HR_Request_Schema_Version__c`; retained for audit and support |
 | Box Doc Gen template and tags | No request instance values | Versioned Word/Doc Gen template in Box; tags correspond to the schema paths |
 | `DocGenFieldValue` collection | Yes | Intended transient Flow state; clear assignable entries after handoff and verify failure-state behavior as described above |
-| Nested `user_input` object and serialized request JSON | Yes | Apex heap and outbound HTTPS request only on the Salesforce side; never inserted, cached, logged, or enqueued in Salesforce |
+| Nested `user_input` object and serialized request JSON | Yes | Apex heap and outbound `POST /2.0/docgen_batches` body only on the Salesforce side; never inserted, cached, logged, or enqueued in Salesforce |
 | Box Doc Gen submitted input | Yes | Received and processed by Box under the tenant's Box Doc Gen data-handling and retention terms; confirm those terms during privacy review |
 | Generated PDF and supporting uploads | Yes | Case folder in Box under approved HR retention, access, legal-hold, and deletion policies |
 | Folder association, batch ID, status, and output file ID | No | Box-managed `box__FRUP__c` and the approved Case orchestration fields |
@@ -477,24 +512,65 @@ At submission, the activated Flow supplies fixed `newHire` and `1.0` constants p
 3. Validates that every required path is present, every supplied path is known exactly once, the declared and populated types match, lengths/allow-lists pass, blank behavior is valid, and the total payload remains under the configured limit.
 4. Rejects unknown/duplicate paths, scalar-versus-object path collisions, reserved `schema`/`case` roots, and unsafe path syntax before building JSON. Allow lower-camel-case segments and a small maximum nesting depth; do not use reflection or arbitrary Salesforce field traversal.
 5. Builds nested maps using the allowed paths, adds only the non-sensitive Case ID/number and schema identity, and serializes the object in Apex memory.
-6. Uses the schema record's pinned Box template file/version, destination folder, output type, and generic filename to submit the Doc Gen batch.
+6. Builds a `POST /2.0/docgen_batches` request from the schema record's pinned Box template file/version, destination folder, `output_type=pdf`, and generic filename, with one `document_generation_data` entry whose `user_input` is the nested object below. Runtime submission goes through `box.DocGenToolkit.submitDocGenBatch`.
 7. Returns only the opaque batch ID, normalized status, and a sanitized error code. It does not copy the schema definition or payload to Case.
 
-The transient JSON sent as Box Doc Gen `user_input` has this shape:
+The transient JSON sent as Box Doc Gen `user_input` is the merge body for that batch job. Box Doc Gen Word tags bind with the same nested paths (`{{employee.firstName}}`, `{{case.caseNumber}}`, and so on). Copy [examples/newHire_1_0_user_input.json](examples/newHire_1_0_user_input.json) into the Doc Gen add-in or a `POST /2.0/docgen_batches` call when authoring the template.
+
+Synthetic `newHire/1.0` `user_input` (all 26 mapped paths plus server-generated `schema` and `case`; values from the field contract):
 
 ```json
 {
-  "schema": {"key": "newHire", "version": "1.0"},
-  "case": {"id": "...", "caseNumber": "..."},
-  "request": {"requestDate": "2026-09-05", "notificationType": "newHireRehire"},
-  "employee": {},
-  "assignment": {},
-  "certification": {},
-  "compensation": {},
-  "submitter": {},
-  "notes": ""
+  "schema": {
+    "key": "newHire",
+    "version": "1.0"
+  },
+  "case": {
+    "id": "500gK00000EXAMPLE",
+    "caseNumber": "00001042"
+  },
+  "request": {
+    "requestDate": "2026-09-09",
+    "notificationType": "newHireRehire"
+  },
+  "employee": {
+    "employeeId": "E-10042",
+    "firstName": "Jordan",
+    "lastName": "Rivera"
+  },
+  "assignment": {
+    "region": "Central",
+    "district": "District 4",
+    "station": "Station 12",
+    "startDate": "2026-10-05",
+    "isRehire": false,
+    "primaryTitle": "Paramedic",
+    "isDualRole": false,
+    "department": "Operations",
+    "status": "New Hire",
+    "manager": "Alex Morgan",
+    "employmentStatus": "Full Time"
+  },
+  "certification": {
+    "level": "EMT-Paramedic",
+    "txdshsNumber": "TX-88421",
+    "priorStateDetails": "NM-44109"
+  },
+  "compensation": {
+    "currentHourlyOrSalary": "Above minimum",
+    "rateReason": "Market adjustment"
+  },
+  "notes": "Synthetic demo notes.\nInclude a second line to check multiline rendering.",
+  "submitter": {
+    "name": "Sam Patel",
+    "jobTitle": "Operations Supervisor",
+    "email": "sam.patel@example.test",
+    "attested": true
+  }
 }
 ```
+
+This example includes the two optional text paths (`certification.priorStateDetails`, `compensation.rateReason`) so every Word tag can be verified in one render. Live submissions with `Blank_Behavior__c = omit` drop those keys when the Flow leaves them blank (for example `compensation.currentHourlyOrSalary` is `At minimum`, so `rateReason` is omitted). A second template check should generate from a copy of this object with those two keys removed.
 
 Dates serialize as `YYYY-MM-DD`, booleans as JSON booleans, and numbers as JSON numbers. Follow each field’s configured blank behavior: `emptyString` is valid only for text; `null` or `omit` may be used for optional values. Required blank values always fail validation. The serialized object is constructed in Apex heap memory for the outbound request and is never deliberately saved, logged, or enqueued.
 
@@ -502,9 +578,9 @@ Dates serialize as `YYYY-MM-DD`, booleans as JSON booleans, and numbers as JSON 
 
 Keep schema key/version and Box template file/version selection explicit, but do not build an activation gate or release-management framework for the demo.
 
-1. Author a Box Doc Gen template covering the full `newHire/1.0` mapping and the non-sensitive Case/schema context. The sample PDF is a form reference, not automatically a usable merge template.
-2. Manually check template tags against approved paths, including the server-generated `case` and `schema` paths. The [Box template-tags endpoint](https://developer.box.com/reference/v2025.0/get-docgen-templates-id-tags) can assist where supported; confirm the actual pinned version. A tag list alone does not prove type compatibility.
-3. Render a synthetic payload and visually check every mapped value, date formatting, Boolean presentation, compensation text, blank optional values, and multi-line notes.
+1. Author a Box Doc Gen template covering the full `newHire/1.0` mapping and the non-sensitive Case/schema context. Tag the Word document from the `user_input` example above. The sample PDF is a form reference, not automatically a usable merge template. Working tag list: [hr_request_demo_template_manifest.md](hr_request_demo_template_manifest.md).
+2. Manually check template tags against approved paths, including the server-generated `case` and `schema` paths. [`GET /2.0/docgen_templates/{template_id}/tags`](https://developer.box.com/reference/v2025.0/get-docgen-templates-id-tags) can assist where supported; confirm the actual pinned version. A tag list alone does not prove type compatibility.
+3. Render the synthetic `user_input` with [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches) (`input_source: "api"`, `output_type: "pdf"`) and visually check every mapped value, date formatting, Boolean presentation, compensation text, blank optional values, and multi-line notes. Status of that job is [`GET /2.0/docgen_batch_jobs/{batch_id}`](https://developer.box.com/reference/v2025.0/get-docgen-batch-jobs-id).
 4. Create `newHire/1.1` by adding optional text path `request.referenceNote`, an extension-only “Request reference note” field/mapping, and a corresponding Box template version. The `1.0` form remains complete and unchanged.
 5. Keep two clearly labeled demo Flow definitions or launchers (`HR_New_Hire_Intake` and `HR_New_Hire_Intake_Schema_Demo`) so the presenter can run both without switching activation mid-demo. Build the second by copying the completed first Flow and adding only the version/field change. Use the same Apex classes for both.
 6. Verify `1.0` rejects the extra path and `1.1` accepts/renders it; old Cases retain their original schema pointer. Both versions can stay Active for the demo. Unknown/inactive versions still fail runtime validation.
@@ -517,7 +593,7 @@ Deploy definitions and records before dependent Flows. Keep historical definitio
 - `SubmitTransientCaseDocGen`: synchronous, callout-capable invocable taking Case ID, folder ID, schema key/version, and field collection. Return `batchId`, normalized `status`, and sanitized `errorCode` only. Flow owns Case writes.
 - Submission must verify Case access, intake provisioning flag, Case schema pointer, eligible state, and folder association. Reject existing batch IDs. Treat identifiers and schema selectors as untrusted inputs even when the normal Flow supplies constants.
 - Generic validation rejects unknown/inactive/ambiguous schemas, duplicate/colliding definitions or submitted paths, reserved roots, missing required values, invalid types/blanks/allowed values, and excessive field/payload sizes. It must have no New Hire-specific conditional branches.
-- Build the Box request from configured template file/version IDs, `input_source=api`, `output_type=pdf`, the verified folder, a filename derived only from Case number, and one document-generation entry containing the nested `user_input`. Use the documented `box.DocGenRequest` interface; resolve any missing property detail from the package reference or class signatures while implementing the final action in chunk 3. No separate JSON-acceptance experiment is required.
+- Build the Box request for [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches): configured template file/version IDs, `input_source: "api"` (set by the Toolkit; not a property on `box.DocGenRequest`), `output_type=pdf`, the verified folder, a filename derived only from Case number, and one `document_generation_data` entry containing the nested `user_input`. Use `box.DocGenToolkit.submitDocGenBatch`. Chunk 3 already implemented this; do not call a different Doc Gen REST path.
 - Optionally `GetCaseDocGenStatus`: thin synchronous wrapper selected only if the managed Flow action cannot satisfy the normalized-output contract. Takes Case ID and returns `status`, `outputFileId`, and `errorCode`; no Case DML.
 - Services run `with sharing` and enforce the relevant CRUD/FLS and Case access for the chosen user context. Keep package debugging disabled during the demo; never log DTOs, input JSON, raw Box results, or exception details. No payload-bearing asynchronous work, cache, events, or retry records.
 
@@ -531,11 +607,11 @@ Coding for the transient submission/status Apex is complete and prefixed `MyBox_
 - `MyBox_GetCaseDocGenStatus` — the optional thin status wrapper, implemented because the normalized output contract (only `status`/`outputFileId`/`errorCode`, with `status = null` meaning "preserve prior state") is easiest to guarantee with a dedicated wrapper rather than the managed `getDocgenBatch` action's raw `DocGenResponse` output.
 - `MyBox_DocGenValidationException` — carries the sanitized `errorCode`. Note: Apex does not allow a subclass of `Exception` to call `super(message)` explicitly (fails to compile with "Method is not visible: void System.ApexBaseException.<init>(String)"); the class instead exposes a static `of(errorCode, message)` factory that uses the compiler-generated `(String)` constructor and sets `errorCode` afterward.
 - `MyBox_DocGenBoxAdapter` / `MyBox_DocGenBoxAdapterImpl` — the small package-call test seam mentioned in chunk 3, so tests substitute a stub `box.DocGenResponse`/exception instead of performing a real callout or mocking managed-package HTTP internals.
-- Supporting metadata added so the Apex compiles/deploys: the seven Case fields, the `HR_DocGen_Schema__mdt`/`HR_DocGen_Field__mdt` Custom Metadata Types, the complete `newHire/1.0` field mapping (`Lifecycle_Status__c = Draft`, pending chunk 2's Box template IDs and chunk 6 activation — no template/folder IDs are set), and a `MyBox_HR_DocGen_Access` permission set granting FLS on the seven Case fields (required because `WITH SECURITY_ENFORCED` throws otherwise; deploying a field via Metadata API alone does not grant FLS to any profile).
-- Verified directly against the installed package (`Box for Salesforce 5.56.0.1`) in the target dev org rather than assumed from public docs: `box.DocGenRequest`/`box.DocGenResponse`/`box.DocGenToolkit`/`box.Toolkit` method and property signatures used above. One correction to this document: `box.DocGenRequest` has no `input_source` property — only `file`, `file_version`, `destination_folder`, `output_type`, and `document_generation_data` (a `List` of one entry with `generated_file_name`/`user_input`); the toolkit apparently sets `input_source` internally.
+- Supporting metadata added so the Apex compiles/deploys: the seven Case fields, the `HR_DocGen_Schema__mdt`/`HR_DocGen_Field__mdt` Custom Metadata Types, the complete `newHire/1.0` field mapping (`Lifecycle_Status__c = Draft`; source XML has `Box_DocGen_Template_File_Id__c` = `2456566806586` and `Box_DocGen_Template_Version_Id__c` = `2724134783386`; activation still chunk 6), and a `MyBox_HR_DocGen_Access` permission set granting FLS on the seven Case fields (required because `WITH SECURITY_ENFORCED` throws otherwise; deploying a field via Metadata API alone does not grant FLS to any profile).
+- Verified directly against the installed package (`Box for Salesforce 5.56.0.1`) in the target dev org rather than assumed from public docs: `box.DocGenRequest`/`box.DocGenResponse`/`box.DocGenToolkit`/`box.Toolkit` method and property signatures used above. Mapping to the correct REST APIs: `submitDocGenBatch` → [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches); `getDocGenBatch` → [`GET /2.0/docgen_batch_jobs/{batch_id}`](https://developer.box.com/reference/v2025.0/get-docgen-batch-jobs-id). `box.DocGenRequest` has no `input_source` property — only `file`, `file_version`, `destination_folder`, `output_type`, and `document_generation_data` (a `List` of one entry with `generated_file_name`/`user_input`). The REST body still requires `input_source: "api"`; the Toolkit sets that when it calls `POST /2.0/docgen_batches`.
 - Test coverage: `MyBox_DocGenSchemaServiceTest` covers the full validator (missing required, unknown/duplicate/reserved/invalid-syntax paths, type mismatch, length, allowed-values, scalar/object path collision, payload-too-large, boolean-false-is-a-value, omit/emptyString blank handling) entirely against in-memory metadata, with no deployed-record dependency. `MyBox_GetCaseDocGenStatusTest` covers all documented status outcomes. `MyBox_SubmitTransientCaseDocGenTest` covers every Case/folder authorization guard.
 - **Outstanding/blocked:** three `MyBox_SubmitTransientCaseDocGenTest` cases (the full success path, the Box-definite-rejection path, and the callout-exception path) exercise `loadActiveSchema`, which requires a deployed, Active schema record. Deploying *any* `CustomMetadata` record (including a disposable probe record with no relation to this feature) to the target dev org currently fails org-side with `UNKNOWN_EXCEPTION` from the Metadata API, while deploying the Custom Metadata Type definitions themselves succeeds — this reproduces even for a brand-new, unrelated custom metadata type, so it is a platform/org limitation, not a defect in these files. The `HR_DocGen_Schema.MyBox_Test_Harness_1_0` / `..._Tiny_1_0` / `..._Collision_1_0` records under `customMetadata/` are authored and ready to deploy once that is resolved (or created manually via Setup). Chunk 2/6 activation of the real `newHire/1.0` record is unaffected since it was always scheduled for chunk 6, not this pass.
-- Not built in this pass (explicitly out of scope): the Screen Flows (chunks 4/7), the Box Doc Gen template (chunk 2), the `newHire/1.1` extension metadata (chunk 7), and Experience Cloud/permission wiring for end users (chunk 6). Per-field `Required__c`/`Max_Length__c` values for the real `newHire/1.0` mapping were deliberately left at generic defaults (`Required__c = false` except `submitter.attested`, `Blank_Behavior__c = omit`, no length caps) rather than invented business rules; the source-PDF-driven field checklist remains chunk 1's `docs/hr_request_demo_contract.md` deliverable.
+- Not built in this pass (explicitly out of scope at the time): the Screen Flows (chunks 4/7; later completed as Draft), the `newHire/1.1` extension metadata (chunk 7), and Experience Cloud/permission wiring for end users (chunk 6). Chunk 2 Word template is file `2456566806586` / version `2724134783386` (operator-tested 9 Sep 2026); Toolkit service-account Doc Gen REST access remains outstanding. Per-field `Required__c`/`Max_Length__c` values for the real `newHire/1.0` mapping were deliberately left at generic defaults (`Required__c = false` except `submitter.attested`, `Blank_Behavior__c = omit`, no length caps) rather than invented business rules; the source-PDF-driven field checklist remains chunk 1's `docs/hr_request_demo_contract.md` deliverable.
 
 ### Experience user and folder access
 
@@ -615,14 +691,16 @@ Chunks 0 and 1 can start in parallel. Chunk 1 uses the documented types and does
 
 **Goal:** Produce the PDF needed for the main demonstration.
 
-- Build/register a Doc Gen template for the full `1.0` contract using the approved Box root.
-- Include all mapped values, Case number, and schema identity; choose readable date/Boolean presentation and preserve multiline notes.
-- Verify tags manually and render synthetic data, including blank optional fields.
-- Publish template file/version IDs and folder-template ID in a manifest for the integration owner; do not edit shared schema records concurrently.
+- Build/register a Doc Gen template for the full `1.0` contract using the approved Box root. Tag the Word file from [examples/newHire_1_0_user_input.json](examples/newHire_1_0_user_input.json) (`document_generation_data[].user_input` on [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches)).
+- Include all mapped values, Case number, and schema identity; choose readable date/Boolean presentation and preserve multiline notes. Tag list: [hr_request_demo_template_manifest.md](hr_request_demo_template_manifest.md).
+- Verify tags with [`GET /2.0/docgen_templates/{template_id}/tags`](https://developer.box.com/reference/v2025.0/get-docgen-templates-id-tags) and render the synthetic `user_input` through `POST /2.0/docgen_batches` (`input_source: "api"`, `output_type: "pdf"`), including a second render with blank optional fields omitted. Confirm generation as the Toolkit **service account**, not only the interactive CLI user.
+- Publish template file/version IDs in the manifest for the integration owner; do not edit shared schema records concurrently. Folder templates are unused by current intake Flows.
 
 **Deliverables:** The Box template, `docs/hr_request_demo_template_manifest.md`, and a synthetic render with field-checklist results.
 
-**Done when:** The full-form PDF renders correctly and the exact pinned template version is available to the configured runtime identity. No automated tag-activation service is required.
+**Done when:** The full-form PDF renders correctly from `POST /2.0/docgen_batches` and the exact pinned template version is available to the configured runtime identity. No automated tag-activation service is required.
+
+**Status (9 Sep 2026):** Operator authored and generation-tested template file `2456566806586` (`new_hire_box_docgen.docx`), version `2724134783386`. CLI actor `35570754363` can `GET` the file. `GET /2.0/docgen_templates` still 404s for this OAuth app. Schema stays Draft. See [hr_request_demo_template_manifest.md](hr_request_demo_template_manifest.md).
 
 ### Chunk 3 — Implement generic validation and submission
 
@@ -713,7 +791,7 @@ Provide: files/artifacts changed; concrete checks and outcomes; non-secret confi
 - Documented Salesforce type support and Box JSON submission are accepted design capabilities. The remaining readiness work concerns target-org/Box configuration; compilation and tests concern the final implementation. No feasibility spike is required.
 - Only synthetic HR data/documents are used. Existing authenticated-user audit identifiers and non-sensitive orchestration IDs are permitted. Real HR data and production privacy approval are deferred.
 - Active, non-paused Flow processing is accepted for the POC, subject to the stated failed-interview and diagnostic limitations. No Pause, Wait, save-for-later, or payload-bearing asynchronous work.
-- Box Doc Gen entitlement/enablement and required authorization scopes are confirmed before implementation. Box describes enablement and reauthorization in [Doc Gen setup](https://support.box.com/hc/en-us/articles/48670280271635-Setting-up-Box-Doc-Gen-in-Salesforce).
+- Box Doc Gen entitlement/enablement and required authorization scopes are confirmed before implementation. Generation uses [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches) with `box-version: 2025.0`. Box describes Salesforce enablement and reauthorization in [Doc Gen setup](https://support.box.com/hc/en-us/articles/48670280271635-Setting-up-Box-Doc-Gen-in-Salesforce).
 - Server operations use the verified configured Box service identity; no shared links are created. Verify the actual package identity behavior rather than assuming all actions default to the service account.
 - Experience users are authenticated and use the package's Box App User integration. Confirm the Client Credentials Grant app, App + Enterprise access, scopes, CORS, service-account ownership/co-ownership, and `Box App User (Experience Cloud)` permissions using [Box Experience Cloud setup](https://support.box.com/hc/en-us/articles/26032384109075-Setting-up-Box-UI-Elements-in-Experience-Cloud).
 - The selected Experience runtime supports the installed managed components and required CSP/framing settings. No portal migration or custom uploader is assumed.

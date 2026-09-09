@@ -1,0 +1,12 @@
+{
+  "activeViewId" : "cfb705fb-1dd4-415d-b7c3-4a16073a88ae",
+  "appPageId" : "db45b40d-78b2-4c31-a6ae-d7b92772aef5",
+  "configurationTags" : [ ],
+  "devName" : "hr_request",
+  "id" : "26456b3b-6b87-409c-a858-6f55a8222e3c",
+  "label" : "HR Request",
+  "pageAccess" : "UseParent",
+  "routeType" : "custom-hr-request",
+  "type" : "route",
+  "urlPrefix" : "hr-request"
+}

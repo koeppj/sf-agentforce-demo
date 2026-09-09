@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NavigationMenu xmlns="http://soap.sforce.com/2006/04/metadata">
+    <container>Default Help Center</container>
+    <containerType>Network</containerType>
+    <label>Default Navigation</label>
+    <navigationMenuItem>
+        <label>Home</label>
+        <position>0</position>
+        <publiclyAvailable>true</publiclyAvailable>
+        <target>/</target>
+        <type>InternalLink</type>
+    </navigationMenuItem>
+    <navigationMenuItem>
+        <label>HR Request</label>
+        <position>1</position>
+        <publiclyAvailable>false</publiclyAvailable>
+        <target>/hr-request</target>
+        <type>InternalLink</type>
+    </navigationMenuItem>
+</NavigationMenu>

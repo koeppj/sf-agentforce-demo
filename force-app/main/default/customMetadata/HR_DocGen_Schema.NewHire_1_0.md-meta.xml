@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fields="Schema_Key__c,Version__c,Lifecycle_Status__c,Request_Type__c,Output_Type__c,Output_File_Name_Pattern__c,Max_Payload_Bytes__c">
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" fields="Schema_Key__c,Version__c,Lifecycle_Status__c,Request_Type__c,Box_DocGen_Template_File_Id__c,Box_DocGen_Template_Version_Id__c,Output_Type__c,Output_File_Name_Pattern__c,Max_Payload_Bytes__c">
     <label>New Hire/Rehire 1.0</label>
     <protected>false</protected>
     <values>
@@ -12,11 +12,19 @@
     </values>
     <values>
         <field>Lifecycle_Status__c</field>
-        <value xsi:type="xsd:string">Draft</value>
+        <value xsi:type="xsd:string">Active</value>
     </values>
     <values>
         <field>Request_Type__c</field>
         <value xsi:type="xsd:string">New Hire/Rehire</value>
+    </values>
+    <values>
+        <field>Box_DocGen_Template_File_Id__c</field>
+        <value xsi:type="xsd:string">2456566806586</value>
+    </values>
+    <values>
+        <field>Box_DocGen_Template_Version_Id__c</field>
+        <value xsi:type="xsd:string">2724134783386</value>
     </values>
     <values>
         <field>Output_Type__c</field>

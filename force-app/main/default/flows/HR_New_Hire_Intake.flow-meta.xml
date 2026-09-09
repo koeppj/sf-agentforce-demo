@@ -705,7 +705,7 @@
             <assignToReference>fvRateReason.textValue</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>inRateReason</elementReference>
+                <elementReference>vRateReason</elementReference>
             </value>
         </assignmentItems>
         <assignmentItems>
@@ -982,10 +982,26 @@
         <locationX>176</locationX>
         <locationY>0</locationY>
         <assignmentItems>
-            <assignToReference>inRateReason</assignToReference>
+            <assignToReference>vRateReason</assignToReference>
             <operator>Assign</operator>
             <value>
                 <stringValue></stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_HR_Case</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Keep_Rate_Reason_Value</name>
+        <label>Keep Rate Reason Value</label>
+        <locationX>176</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>vRateReason</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>inRateReason</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -1277,7 +1293,7 @@
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Create_HR_Case</targetReference>
+                <targetReference>Keep_Rate_Reason_Value</targetReference>
             </connector>
             <label>Keep rate reason</label>
         </rules>
@@ -1324,6 +1340,11 @@
     </decisions>
     <description>Authenticated Experience Cloud New Hire/Rehire intake. Form values stay in the active interview only. Creates a generic Case shell, a Box folder, and a transient Doc Gen submission. Does not persist request-subject PII on Case.</description>
     <environments>Default</environments>
+    <formulas>
+        <name>fHasBoxFolderId</name>
+        <dataType>Boolean</dataType>
+        <expression>NOT(ISBLANK({!vBoxFolderId}))</expression>
+    </formulas>
     <interviewLabel>HR New Hire Intake {!$Flow.CurrentDateTime}</interviewLabel>
     <label>HR New Hire Intake</label>
     <processMetadataValues>
@@ -1648,9 +1669,12 @@
                         <fields>
                             <name>inIsRehire</name>
                             <dataType>Boolean</dataType>
+                            <defaultValue>
+                                <booleanValue>false</booleanValue>
+                            </defaultValue>
                             <fieldText>Rehire?</fieldText>
                             <fieldType>InputField</fieldType>
-                            <isRequired>false</isRequired>
+                            <isRequired>true</isRequired>
                         </fields>
                         <fields>
                             <name>inPrimaryTitle</name>
@@ -1669,9 +1693,12 @@
                         <fields>
                             <name>inIsDualRole</name>
                             <dataType>Boolean</dataType>
+                            <defaultValue>
+                                <booleanValue>false</booleanValue>
+                            </defaultValue>
                             <fieldText>Dual role?</fieldText>
                             <fieldType>InputField</fieldType>
-                            <isRequired>false</isRequired>
+                            <isRequired>true</isRequired>
                         </fields>
                         <fields>
                             <name>inDepartment</name>
@@ -1883,6 +1910,9 @@
                         <fields>
                             <name>inAttestation</name>
                             <dataType>Boolean</dataType>
+                            <defaultValue>
+                                <booleanValue>false</booleanValue>
+                            </defaultValue>
                             <fieldText>I attest that this request is accurate and authorized</fieldText>
                             <fieldType>InputField</fieldType>
                             <isRequired>true</isRequired>
@@ -1925,14 +1955,14 @@
                     <elementReference>vBoxFolderId</elementReference>
                 </value>
             </inputParameters>
-            <isRequired>false</isRequired>
+            <isRequired>true</isRequired>
             <visibilityRule>
                 <conditionLogic>and</conditionLogic>
                 <conditions>
-                    <leftValueReference>vBoxFolderId</leftValueReference>
-                    <operator>IsBlank</operator>
+                    <leftValueReference>fHasBoxFolderId</leftValueReference>
+                    <operator>EqualTo</operator>
                     <rightValue>
-                        <booleanValue>false</booleanValue>
+                        <booleanValue>true</booleanValue>
                     </rightValue>
                 </conditions>
             </visibilityRule>
@@ -1947,7 +1977,7 @@
             <targetReference>Form_Entry</targetReference>
         </connector>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
     <variables>
         <name>colDocGenFields</name>
         <apexClass>MyBox_DocGenFieldValue</apexClass>
@@ -2201,6 +2231,13 @@
     </variables>
     <variables>
         <name>vErrorCode</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>vRateReason</name>
         <dataType>String</dataType>
         <isCollection>false</isCollection>
         <isInput>false</isInput>

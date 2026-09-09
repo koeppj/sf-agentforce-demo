@@ -1,0 +1,49 @@
+{
+  "appPageId" : "db45b40d-78b2-4c31-a6ae-d7b92772aef5",
+  "componentName" : "siteforce:sldsOneColLayout",
+  "dataProviders" : [ ],
+  "id" : "cfb705fb-1dd4-415d-b7c3-4a16073a88ae",
+  "label" : "HR Request",
+  "regions" : [ {
+    "id" : "7a90632c-035c-4b8a-bc6b-59c198661397",
+    "regionName" : "header",
+    "type" : "region"
+  }, {
+    "components" : [ {
+      "componentAttributes" : {
+        "flowArguments" : "",
+        "flowName" : "HR_New_Hire_Intake"
+      },
+      "componentName" : "forceCommunity:flowCommunity",
+      "id" : "c65d3b6f-5a4b-4d29-9bf2-2347295c36ba",
+      "renderPriority" : "NEUTRAL",
+      "renditionMap" : { },
+      "type" : "component"
+    } ],
+    "id" : "4c19fda5-acec-47aa-8bf6-461cc8c58f3d",
+    "regionName" : "content",
+    "type" : "region"
+  }, {
+    "id" : "bdd7900c-3e67-41e5-bdf7-7aa94fdb7f8c",
+    "regionName" : "footer",
+    "type" : "region"
+  }, {
+    "components" : [ {
+      "componentAttributes" : {
+        "customHeadTags" : "",
+        "description" : "Submit a New Hire/Rehire HR request.",
+        "title" : "HR Request"
+      },
+      "componentName" : "forceCommunity:seoAssistant",
+      "id" : "b6ce0f6d-5f71-4753-838d-9b9ef30269ca",
+      "renditionMap" : { },
+      "type" : "component"
+    } ],
+    "id" : "3f9a56c4-4dc6-4198-b822-2e87bc464c5b",
+    "regionName" : "sfdcHiddenRegion",
+    "type" : "region"
+  } ],
+  "themeLayoutType" : "Inner",
+  "type" : "view",
+  "viewType" : "custom-hr-request"
+}

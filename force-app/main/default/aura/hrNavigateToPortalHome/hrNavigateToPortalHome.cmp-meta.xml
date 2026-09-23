@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<AuraDefinitionBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <description
+    >Flow Aura local action. Navigates to the Experience Cloud /s/ home path when HR New Hire Intake finishes. The Flow runtime requires an Aura invoke controller, not an LWC.</description>
+</AuraDefinitionBundle>

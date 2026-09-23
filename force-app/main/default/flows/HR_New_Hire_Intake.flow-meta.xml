@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
         <name>Create_Case_Folder</name>
@@ -83,6 +83,59 @@
         <nameSegment>MyBox_SubmitTransientCaseDocGen</nameSegment>
         <offset>0</offset>
         <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <name>Collaborate_Running_User</name>
+        <label>Collaborate Running User</label>
+        <locationX>176</locationX>
+        <locationY>0</locationY>
+        <actionName>box__CreateCollaborationOnRecord_v2</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Receipt</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Receipt</targetReference>
+        </faultConnector>
+        <flowTransactionModel>NewTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>collabType</name>
+            <value>
+                <stringValue>EDITOR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>optCreateFolder</name>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recordId</name>
+            <value>
+                <elementReference>vCaseId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>userId</name>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>box__CreateCollaborationOnRecord_v2</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <name>Navigate_To_Portal_Home</name>
+        <label>Navigate To Portal Home</label>
+        <locationX>176</locationX>
+        <locationY>0</locationY>
+        <actionName>c:hrNavigateToPortalHome</actionName>
+        <actionType>component</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <nameSegment>c:hrNavigateToPortalHome</nameSegment>
+        <offset>0</offset>
     </actionCalls>
     <apiVersion>66.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
@@ -574,14 +627,16 @@
             </value>
         </assignmentItems>
         <assignmentItems>
-            <assignToReference>fvCertificationLevel.valueType</assignToReference>
+            <assignToReference
+            >fvCertificationLevel.valueType</assignToReference>
             <operator>Assign</operator>
             <value>
                 <stringValue>text</stringValue>
             </value>
         </assignmentItems>
         <assignmentItems>
-            <assignToReference>fvCertificationLevel.textValue</assignToReference>
+            <assignToReference
+            >fvCertificationLevel.textValue</assignToReference>
             <operator>Assign</operator>
             <value>
                 <elementReference>inCertificationLevel</elementReference>
@@ -955,21 +1010,24 @@
             <assignToReference>vDocGenBatchId</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>Submit_Transient_DocGen.batchId</elementReference>
+                <elementReference
+                >Submit_Transient_DocGen.batchId</elementReference>
             </value>
         </assignmentItems>
         <assignmentItems>
             <assignToReference>vDocGenStatus</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>Submit_Transient_DocGen.status</elementReference>
+                <elementReference
+                >Submit_Transient_DocGen.status</elementReference>
             </value>
         </assignmentItems>
         <assignmentItems>
             <assignToReference>vErrorCode</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>Submit_Transient_DocGen.errorCode</elementReference>
+                <elementReference
+                >Submit_Transient_DocGen.errorCode</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -985,7 +1043,7 @@
             <assignToReference>vRateReason</assignToReference>
             <operator>Assign</operator>
             <value>
-                <stringValue></stringValue>
+                <stringValue />
             </value>
         </assignmentItems>
         <connector>
@@ -1018,7 +1076,7 @@
             <operator>Assign</operator>
         </assignmentItems>
         <connector>
-            <targetReference>Receipt</targetReference>
+            <targetReference>Collaborate_Running_User</targetReference>
         </connector>
     </assignments>
     <choices>
@@ -1338,7 +1396,8 @@
             <label>Doc Gen Submit Failed</label>
         </rules>
     </decisions>
-    <description>Authenticated Experience Cloud New Hire/Rehire intake. Form values stay in the active interview only. Creates a generic Case shell, a Box folder, and a transient Doc Gen submission. Does not persist request-subject PII on Case.</description>
+    <description
+    >Authenticated Experience Cloud New Hire/Rehire intake. Form values stay in the active interview only. Creates a generic Case shell, a Box folder, collaborates the running user as Editor on that folder, and a transient Doc Gen submission. Does not persist request-subject PII on Case. Box managed-package autocollaboration is disabled, so Editor access is granted explicitly before the uploader screen. Finish on the receipt and terminal fault screens runs c:hrNavigateToPortalHome so the user returns to Experience Cloud Home instead of restarting the interview.</description>
     <environments>Default</environments>
     <formulas>
         <name>fHasBoxFolderId</name>
@@ -1471,7 +1530,7 @@
         <inputAssignments>
             <field>HR_Integration_Error_Code__c</field>
             <value>
-                <stringValue></stringValue>
+                <stringValue />
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -1551,9 +1610,13 @@
         <allowBack>false</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Navigate_To_Portal_Home</targetReference>
+        </connector>
         <fields>
             <name>faultCaseCreateText</name>
-            <fieldText>&lt;p&gt;The request could not be created. No Case was saved. Re-enter the form to try again.&lt;/p&gt;</fieldText>
+            <fieldText
+            >&lt;p&gt;The request could not be created. No Case was saved. Click Finish to return Home, then start a new request to try again.&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
         </fields>
         <showFooter>true</showFooter>
@@ -1567,9 +1630,13 @@
         <allowBack>false</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Navigate_To_Portal_Home</targetReference>
+        </connector>
         <fields>
             <name>faultFolderText</name>
-            <fieldText>&lt;p&gt;The Case was created but the Box folder could not be provisioned. Status is Folder Failed. Do not resubmit this Case; start a new request after an operator reviews the folder association.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Case Number:&lt;/b&gt; {!Create_HR_Case.CaseNumber}&lt;/p&gt;</fieldText>
+            <fieldText
+            >&lt;p&gt;The Case was created but the Box folder could not be provisioned. Status is Folder Failed. Do not resubmit this Case; start a new request after an operator reviews the folder association.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Case Number:&lt;/b&gt; {!Create_HR_Case.CaseNumber}&lt;/p&gt;&lt;p&gt;Click Finish to return to the portal home page.&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
         </fields>
         <showFooter>true</showFooter>
@@ -1588,7 +1655,8 @@
         </connector>
         <fields>
             <name>formIntro</name>
-            <fieldText>&lt;p&gt;Complete this New Hire / Rehire request. Values are sent to Box and are not stored as Case field data.&lt;/p&gt;</fieldText>
+            <fieldText
+            >&lt;p&gt;Complete this New Hire / Rehire request. Values are sent to Box and are not stored as Case field data.&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
         </fields>
                 <fields>
@@ -1608,7 +1676,8 @@
                         <fields>
                             <name>inEmployeeFirstName</name>
                             <dataType>String</dataType>
-                            <fieldText>Employee First Name (legal name)</fieldText>
+                            <fieldText
+                    >Employee First Name (legal name)</fieldText>
                             <fieldType>InputField</fieldType>
                             <isRequired>true</isRequired>
                         </fields>
@@ -1654,7 +1723,8 @@
                         <fields>
                             <name>inStation</name>
                             <dataType>String</dataType>
-                            <fieldText>New Station / Corporate Location</fieldText>
+                            <fieldText
+                    >New Station / Corporate Location</fieldText>
                             <fieldType>InputField</fieldType>
                             <isRequired>true</isRequired>
                         </fields>
@@ -1678,13 +1748,20 @@
                         </fields>
                         <fields>
                             <name>inPrimaryTitle</name>
-                            <choiceReferences>chPrimaryTitle_EMT_Basic</choiceReferences>
-                            <choiceReferences>chPrimaryTitle_EMT_Advanced</choiceReferences>
-                            <choiceReferences>chPrimaryTitle_Paramedic</choiceReferences>
-                            <choiceReferences>chPrimaryTitle_Licensed_Paramedic</choiceReferences>
-                            <choiceReferences>chPrimaryTitle_Dispatcher</choiceReferences>
-                            <choiceReferences>chPrimaryTitle_Supervisor</choiceReferences>
-                            <choiceReferences>chPrimaryTitle_Other</choiceReferences>
+                            <choiceReferences
+                    >chPrimaryTitle_EMT_Basic</choiceReferences>
+                            <choiceReferences
+                    >chPrimaryTitle_EMT_Advanced</choiceReferences>
+                            <choiceReferences
+                    >chPrimaryTitle_Paramedic</choiceReferences>
+                            <choiceReferences
+                    >chPrimaryTitle_Licensed_Paramedic</choiceReferences>
+                            <choiceReferences
+                    >chPrimaryTitle_Dispatcher</choiceReferences>
+                            <choiceReferences
+                    >chPrimaryTitle_Supervisor</choiceReferences>
+                            <choiceReferences
+                    >chPrimaryTitle_Other</choiceReferences>
                             <dataType>String</dataType>
                             <fieldText>New Primary Title</fieldText>
                             <fieldType>DropdownBox</fieldType>
@@ -1702,11 +1779,16 @@
                         </fields>
                         <fields>
                             <name>inDepartment</name>
-                            <choiceReferences>chDepartment_Operations</choiceReferences>
-                            <choiceReferences>chDepartment_Clinical</choiceReferences>
-                            <choiceReferences>chDepartment_Fleet</choiceReferences>
-                            <choiceReferences>chDepartment_Corporate</choiceReferences>
-                            <choiceReferences>chDepartment_Other</choiceReferences>
+                            <choiceReferences
+                    >chDepartment_Operations</choiceReferences>
+                            <choiceReferences
+                    >chDepartment_Clinical</choiceReferences>
+                            <choiceReferences
+                    >chDepartment_Fleet</choiceReferences>
+                            <choiceReferences
+                    >chDepartment_Corporate</choiceReferences>
+                            <choiceReferences
+                    >chDepartment_Other</choiceReferences>
                             <dataType>String</dataType>
                             <fieldText>New Department</fieldText>
                             <fieldType>DropdownBox</fieldType>
@@ -1714,10 +1796,14 @@
                         </fields>
                         <fields>
                             <name>inNewStatus</name>
-                            <choiceReferences>chNewStatus_New_Hire</choiceReferences>
-                            <choiceReferences>chNewStatus_Rehire</choiceReferences>
-                            <choiceReferences>chNewStatus_Transfer</choiceReferences>
-                            <choiceReferences>chNewStatus_Promotion</choiceReferences>
+                            <choiceReferences
+                    >chNewStatus_New_Hire</choiceReferences>
+                            <choiceReferences
+                    >chNewStatus_Rehire</choiceReferences>
+                            <choiceReferences
+                    >chNewStatus_Transfer</choiceReferences>
+                            <choiceReferences
+                    >chNewStatus_Promotion</choiceReferences>
                             <dataType>String</dataType>
                             <fieldText>New Status</fieldText>
                             <fieldType>DropdownBox</fieldType>
@@ -1732,8 +1818,10 @@
                         </fields>
                         <fields>
                             <name>inEmploymentStatus</name>
-                            <choiceReferences>chEmploymentStatus_Full_Time</choiceReferences>
-                            <choiceReferences>chEmploymentStatus_PRN</choiceReferences>
+                            <choiceReferences
+                    >chEmploymentStatus_Full_Time</choiceReferences>
+                            <choiceReferences
+                    >chEmploymentStatus_PRN</choiceReferences>
                             <dataType>String</dataType>
                             <fieldText>Status (Full Time / PRN)</fieldText>
                             <fieldType>DropdownBox</fieldType>
@@ -1759,13 +1847,20 @@
                         <fieldType>Region</fieldType>
                         <fields>
                             <name>inCertificationLevel</name>
-                            <choiceReferences>chCertificationLevel_EMT_Basic</choiceReferences>
-                            <choiceReferences>chCertificationLevel_EMT_Advanced</choiceReferences>
-                            <choiceReferences>chCertificationLevel_EMT_Paramedic</choiceReferences>
-                            <choiceReferences>chCertificationLevel_Licensed_Paramedic</choiceReferences>
-                            <choiceReferences>chCertificationLevel_CCP</choiceReferences>
-                            <choiceReferences>chCertificationLevel_FP_C</choiceReferences>
-                            <choiceReferences>chCertificationLevel_None</choiceReferences>
+                            <choiceReferences
+                    >chCertificationLevel_EMT_Basic</choiceReferences>
+                            <choiceReferences
+                    >chCertificationLevel_EMT_Advanced</choiceReferences>
+                            <choiceReferences
+                    >chCertificationLevel_EMT_Paramedic</choiceReferences>
+                            <choiceReferences
+                    >chCertificationLevel_Licensed_Paramedic</choiceReferences>
+                            <choiceReferences
+                    >chCertificationLevel_CCP</choiceReferences>
+                            <choiceReferences
+                    >chCertificationLevel_FP_C</choiceReferences>
+                            <choiceReferences
+                    >chCertificationLevel_None</choiceReferences>
                             <dataType>String</dataType>
                             <fieldText>Cert Level</fieldText>
                             <fieldType>DropdownBox</fieldType>
@@ -1781,7 +1876,8 @@
                         <fields>
                             <name>inPriorCertificationDetails</name>
                             <dataType>String</dataType>
-                            <helpText>Optional. Supporting backup can be uploaded to Box after submit.</helpText>
+                            <helpText
+                    >Optional. Supporting backup can be uploaded to Box after submit.</helpText>
                             <fieldText>Prior Cert # State</fieldText>
                             <fieldType>InputField</fieldType>
                             <isRequired>false</isRequired>
@@ -1806,9 +1902,12 @@
                         <fieldType>Region</fieldType>
                         <fields>
                             <name>inCurrentCompensation</name>
-                            <choiceReferences>chCurrentCompensation_At_minimum</choiceReferences>
-                            <choiceReferences>chCurrentCompensation_Above_minimum</choiceReferences>
-                            <choiceReferences>chCurrentCompensation_Above_maximum</choiceReferences>
+                            <choiceReferences
+                    >chCurrentCompensation_At_minimum</choiceReferences>
+                            <choiceReferences
+                    >chCurrentCompensation_Above_minimum</choiceReferences>
+                            <choiceReferences
+                    >chCurrentCompensation_Above_maximum</choiceReferences>
                             <dataType>String</dataType>
                             <fieldText>Current Hourly / Salary</fieldText>
                             <fieldType>DropdownBox</fieldType>
@@ -1819,23 +1918,28 @@
                             <dataType>String</dataType>
                             <fieldText>New Hire Rate Reason</fieldText>
                             <fieldType>LargeTextArea</fieldType>
-                            <helpText>Required when compensation is Above minimum or Above maximum. Above-maximum approval documents can be uploaded to Box after submit.</helpText>
+                            <helpText
+                    >Required when compensation is Above minimum or Above maximum. Above-maximum approval documents can be uploaded to Box after submit.</helpText>
                             <isRequired>false</isRequired>
                             <validationRule>
-                                <errorMessage>A rate reason is required when compensation is Above minimum or Above maximum.</errorMessage>
-                                <formulaExpression>OR(AND({!inCurrentCompensation} &lt;&gt; "Above minimum", {!inCurrentCompensation} &lt;&gt; "Above maximum"), NOT(ISBLANK({!inRateReason})))</formulaExpression>
+                                <errorMessage
+                        >A rate reason is required when compensation is Above minimum or Above maximum.</errorMessage>
+                                <formulaExpression
+                        >OR(AND({!inCurrentCompensation} &lt;&gt; "Above minimum", {!inCurrentCompensation} &lt;&gt; "Above maximum"), NOT(ISBLANK({!inRateReason})))</formulaExpression>
                             </validationRule>
                             <visibilityRule>
                                 <conditionLogic>or</conditionLogic>
                                 <conditions>
-                                    <leftValueReference>inCurrentCompensation</leftValueReference>
+                                    <leftValueReference
+                            >inCurrentCompensation</leftValueReference>
                                     <operator>EqualTo</operator>
                                     <rightValue>
                                         <stringValue>Above minimum</stringValue>
                                     </rightValue>
                                 </conditions>
                                 <conditions>
-                                    <leftValueReference>inCurrentCompensation</leftValueReference>
+                                    <leftValueReference
+                            >inCurrentCompensation</leftValueReference>
                                     <operator>EqualTo</operator>
                                     <rightValue>
                                         <stringValue>Above maximum</stringValue>
@@ -1896,7 +2000,8 @@
                         <fields>
                             <name>inSubmitterJobTitle</name>
                             <dataType>String</dataType>
-                            <fieldText>Person Completing Form Job Title</fieldText>
+                            <fieldText
+                    >Person Completing Form Job Title</fieldText>
                             <fieldType>InputField</fieldType>
                             <isRequired>true</isRequired>
                         </fields>
@@ -1913,7 +2018,8 @@
                             <defaultValue>
                                 <booleanValue>false</booleanValue>
                             </defaultValue>
-                            <fieldText>I attest that this request is accurate and authorized</fieldText>
+                            <fieldText
+                    >I attest that this request is accurate and authorized</fieldText>
                             <fieldType>InputField</fieldType>
                             <isRequired>true</isRequired>
                         </fields>
@@ -1940,9 +2046,13 @@
         <allowBack>false</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Navigate_To_Portal_Home</targetReference>
+        </connector>
         <fields>
             <name>receiptStatus</name>
-            <fieldText>&lt;p&gt;Your HR request was accepted for processing.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Case Number:&lt;/b&gt; {!vCaseNumber}&lt;/p&gt;&lt;p&gt;&lt;b&gt;HR Integration Status:&lt;/b&gt; {!vDocGenStatus}&lt;/p&gt;&lt;p&gt;&lt;b&gt;Error Code:&lt;/b&gt; {!vErrorCode}&lt;/p&gt;&lt;p&gt;Supporting files are optional. Upload them to the Case Box folder below, or later from the Case page. Use Check Document Status on the Case to refresh PDF generation.&lt;/p&gt;</fieldText>
+            <fieldText
+            >&lt;p&gt;Your HR request was accepted for processing.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Case Number:&lt;/b&gt; {!vCaseNumber}&lt;/p&gt;&lt;p&gt;&lt;b&gt;HR Integration Status:&lt;/b&gt; {!vDocGenStatus}&lt;/p&gt;&lt;p&gt;&lt;b&gt;Error Code:&lt;/b&gt; {!vErrorCode}&lt;/p&gt;&lt;p&gt;Supporting files are optional. Upload them to the Case Box folder below, or later from the Case page. Use Check Document Status on the Case to refresh PDF generation.&lt;/p&gt;&lt;p&gt;When you are done, click Finish to return to the portal home page.&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
         </fields>
         <fields>

@@ -33,12 +33,12 @@ Treat documented Salesforce type support and Box JSON submission as established 
 
 Salesforce's Help article [Considerations for the Apex-Defined Data Type](https://help.salesforce.com/s/articleView?id=platform.flow_considerations_apex_data_type.htm&language=en_US&type=5) explicitly supports Boolean, Integer, Long, Decimal, Double, Date, DateTime, and String, as single values and lists. The descriptor uses these supported types:
 
-| Form value | Descriptor field / Apex type | Outbound JSON representation |
-| --- | --- | --- |
-| Text | `textValue: String` | String |
-| Date | `dateValue: Date` | ISO date string (`YYYY-MM-DD`); JSON has no native date type |
-| Number | `numberValue: Decimal` | Number |
-| Checkbox | `booleanValue: Boolean` | Boolean |
+| Form value | Descriptor field / Apex type | Outbound JSON representation                                 |
+| ---------- | ---------------------------- | ------------------------------------------------------------ |
+| Text       | `textValue: String`          | String                                                       |
+| Date       | `dateValue: Date`            | ISO date string (`YYYY-MM-DD`); JSON has no native date type |
+| Number     | `numberValue: Decimal`       | Number                                                       |
+| Checkbox   | `booleanValue: Boolean`      | Boolean                                                      |
 
 Follow the documented DTO requirements: a top-level class, `@AuraEnabled` fields, and an accessible no-argument constructor. Do not use getter methods or a list-of-lists field on the Apex-defined Flow variable. Apply the invocable annotations to the action contract as described below.
 
@@ -50,12 +50,12 @@ Tests cover our field mappings, validation, blank handling, access controls, con
 
 All document-generation work in this demo is the Box Doc Gen API family released in Box API version `2025.0`. Every REST call must send `box-version: 2025.0`. The Salesforce Toolkit methods below are wrappers around these endpoints; they are not a different generation product.
 
-| Operation | REST (correct API) | Salesforce Toolkit |
-| --- | --- | --- |
-| Generate the request PDF from JSON | [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches) | `box.DocGenToolkit.submitDocGenBatch` |
-| Read jobs in an accepted batch | [`GET /2.0/docgen_batch_jobs/{batch_id}`](https://developer.box.com/reference/v2025.0/get-docgen-batch-jobs-id) | `box.DocGenToolkit.getDocGenBatch` |
-| List templates | [`GET /2.0/docgen_templates`](https://developer.box.com/reference/v2025.0/get-docgen-templates) | (CLI / REST; not used at intake runtime) |
-| List tags on a template version | [`GET /2.0/docgen_templates/{template_id}/tags`](https://developer.box.com/reference/v2025.0/get-docgen-templates-id-tags) | Chunk 2 verification only |
+| Operation                          | REST (correct API)                                                                                                         | Salesforce Toolkit                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Generate the request PDF from JSON | [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches)                              | `box.DocGenToolkit.submitDocGenBatch`    |
+| Read jobs in an accepted batch     | [`GET /2.0/docgen_batch_jobs/{batch_id}`](https://developer.box.com/reference/v2025.0/get-docgen-batch-jobs-id)            | `box.DocGenToolkit.getDocGenBatch`       |
+| List templates                     | [`GET /2.0/docgen_templates`](https://developer.box.com/reference/v2025.0/get-docgen-templates)                            | (CLI / REST; not used at intake runtime) |
+| List tags on a template version    | [`GET /2.0/docgen_templates/{template_id}/tags`](https://developer.box.com/reference/v2025.0/get-docgen-templates-id-tags) | Chunk 2 verification only                |
 
 `POST /2.0/docgen_batches` required fields are `file`, `input_source` (must be `"api"` for API-based generation), `destination_folder`, `output_type`, and `document_generation_data`. Optional `file_version` pins the approved template version. Each `document_generation_data` entry requires `generated_file_name` and `user_input`. This intake submits **one** entry per Case.
 
@@ -65,17 +65,20 @@ A representative generation request (IDs are placeholders):
 
 ```json
 {
-  "file": { "id": "<Box_DocGen_Template_File_Id>", "type": "file" },
-  "file_version": { "id": "<Box_DocGen_Template_Version_Id>", "type": "file_version" },
-  "input_source": "api",
-  "destination_folder": { "id": "<Case_Box_Folder_Id>", "type": "folder" },
-  "output_type": "pdf",
-  "document_generation_data": [
-    {
-      "generated_file_name": "HR Request - 00001042",
-      "user_input": { }
-    }
-  ]
+    "file": { "id": "<Box_DocGen_Template_File_Id>", "type": "file" },
+    "file_version": {
+        "id": "<Box_DocGen_Template_Version_Id>",
+        "type": "file_version"
+    },
+    "input_source": "api",
+    "destination_folder": { "id": "<Case_Box_Folder_Id>", "type": "folder" },
+    "output_type": "pdf",
+    "document_generation_data": [
+        {
+            "generated_file_name": "HR Request - 00001042",
+            "user_input": {}
+        }
+    ]
 }
 ```
 
@@ -123,24 +126,24 @@ Operational reporting in Salesforce is therefore limited to request counts, proc
 ### End-to-end Flow
 
 1. Add a New Hire/Rehire Screen Flow to Experience Cloud with standard screen components covering:
-   - Employee identity and contact fields.
-   - Region, district, station, start date, rehire status, title, dual role, department, manager, and employment status.
-   - Certification details, compensation category/reason, and notes.
-   - Submitter attestation.
+    - Employee identity and contact fields.
+    - Region, district, station, start date, rehire status, title, dual role, department, manager, and employment status.
+    - Certification details, compensation category/reason, and notes.
+    - Submitter attestation.
 2. Keep all entered values in active Flow variables only. Disable Pause, Wait, save-for-later, resume, and input/output variable exposure. Do not place a screen, asynchronous action, or logging action between payload assembly and Doc Gen submission.
 3. Limit v1 to New Hire/Rehire. Other request types become separate Screen Flows that reuse the same transient Apex interface.
 4. On submit:
-   - Validate required fields, choices, cross-field rules, and attestation before record creation. Generic schema validation also runs in Apex before any Doc Gen callout.
-   - Create a Case shell with a generic subject such as `HR Request`, generic Type/Origin/Status values, and no Description or form-derived values.
-   - Mark the Case as intake-managed using a non-sensitive provisioning field.
-   - Call `box__CreateFolderForRecordIdFromTemplate_v2` with the Case ID and configured folder-template ID. Use a generic Box folder name based only on the Case number.
-   - Configure the folder action to start a new Flow transaction so the Case is committed before the Box callout, as supported by [Salesforce Flow transaction control](https://help.salesforce.com/s/articleView?id=flow_concepts_transaction.htm&language=en_US).
-   - Let the Box managed package persist the Case-to-folder association in `box__FRUP__c`. Keep the folder ID returned by the action only in an active Flow variable for the immediate Doc Gen and uploader steps; do not copy it to a Case field.
-   - Build the typed collection and call `SubmitTransientCaseDocGen` with transaction control set to start a new transaction too. This commits the managed folder association before the next callout. The action validates Case access, verifies the supplied folder matches the Case association, validates the collection, serializes JSON in memory, and returns only non-sensitive identifiers/status.
-   - Flow owns all intake Case writes. Set the schema key/version and provisioning flag when creating the shell; after the callout, save only the returned batch ID, integration status, and sanitized error code. Submission Apex does not perform Case DML. The folder relationship remains owned by the Box managed package.
-   - Clear assignable sensitive Flow variables and the field collection on success and handled failure before rendering the next screen; failures exit to manual recovery, without an in-memory retry loop.
+    - Validate required fields, choices, cross-field rules, and attestation before record creation. Generic schema validation also runs in Apex before any Doc Gen callout.
+    - Create a Case shell with a generic subject such as `HR Request`, generic Type/Origin/Status values, and no Description or form-derived values.
+    - Mark the Case as intake-managed using a non-sensitive provisioning field.
+    - Call `box__CreateFolderForRecordIdFromTemplate_v2` with the Case ID and configured folder-template ID. Use a generic Box folder name based only on the Case number.
+    - Configure the folder action to start a new Flow transaction so the Case is committed before the Box callout, as supported by [Salesforce Flow transaction control](https://help.salesforce.com/s/articleView?id=flow_concepts_transaction.htm&language=en_US).
+    - Let the Box managed package persist the Case-to-folder association in `box__FRUP__c`. Keep the folder ID returned by the action only in an active Flow variable for the immediate Doc Gen and uploader steps; do not copy it to a Case field.
+    - Build the typed collection and call `SubmitTransientCaseDocGen` with transaction control set to start a new transaction too. This commits the managed folder association before the next callout. The action validates Case access, verifies the supplied folder matches the Case association, validates the collection, serializes JSON in memory, and returns only non-sensitive identifiers/status.
+    - Flow owns all intake Case writes. Set the schema key/version and provisioning flag when creating the shell; after the callout, save only the returned batch ID, integration status, and sanitized error code. Submission Apex does not perform Case DML. The folder relationship remains owned by the Box managed package.
+    - Clear assignable sensitive Flow variables and the field collection on success and handled failure before rendering the next screen; failures exit to manual recovery, without an in-memory retry loop.
 5. Show the managed Box Content Uploader on the next Flow screen with the returned folder ID. Files go directly to Box; no Salesforce `ContentVersion` or other staging record is created.
-6. Show a receipt containing only the Case number and non-sensitive integration status. Do not echo the request subject's name, email, compensation, or other form values.
+6. Show a receipt containing only the Case number and non-sensitive integration status. Do not echo the request subject's name, email, compensation, or other form values. On Finish from the receipt and terminal fault screens, run the `c:hrNavigateToPortalHome` Aura Flow local action (`lightning:availableForFlowActions` with an `invoke` controller) so the user returns to the Experience Cloud `/s/` home path via `force:navigateToURL`. The Screen Flow Core Action `component` type is an Aura local action; an LWC is not invoked. This overrides the default Experience Builder behavior of starting a new interview on `/hr-request`. Do not pass Case IDs or request values in the URL.
 7. Provide a manual **Check document status** action on the Experience Case page and a receipt link to that page. It takes only the authorized Case ID; users may run it again while Box is processing.
 8. Add Box Content Explorer to the Experience Cloud Case page with preview, upload, and download enabled; disable delete, rename, share, and folder creation. The supported component properties are documented in [Box UI Elements for Salesforce](https://developer.box.com/guides/tooling/salesforce-toolkit/ui-elements).
 
@@ -160,7 +163,7 @@ Use this runtime sequence:
 6. Each Assignment initializes one or more `DocGenFieldValue` Apex-defined variables from screen resources and adds them to the `colDocGenFields` Apex-defined collection.
 7. Invoke `SubmitTransientCaseDocGen` once, passing the Case ID, transient folder ID, fixed schema key/version, and `colDocGenFields`. Start a new transaction at this action to commit prior managed-package DML; no extra screen or asynchronous payload handoff is needed.
 8. Apex validates every path and type against custom metadata, creates the nested JSON with `JSON.serialize`, and submits it to Box. Flow never constructs JSON itself.
-9. After Apex returns, retain only the batch ID and sanitized status. Clear assignable sensitive variables and the field-value collection, proceed directly to the non-sensitive upload/receipt screen, and allow the Flow interview to finish.
+9. After Apex returns, retain only the batch ID and sanitized status. Clear assignable sensitive variables and the field-value collection, proceed directly to the non-sensitive upload/receipt screen, and on Finish navigate to portal Home rather than restarting the interview.
 
 No Screen, Pause, Wait, save-for-later step, asynchronous action, subflow boundary, or logging action is permitted between `Build_*_Fields` and `SubmitTransientCaseDocGen`.
 
@@ -168,15 +171,15 @@ No Screen, Pause, Wait, save-for-later step, asynchronous action, subflow bounda
 
 Create these resources in the Screen Flow:
 
-| Resource | Flow type | Purpose |
-| --- | --- | --- |
-| `cSchemaKey` | Text constant: `newHire` | Selects an allow-listed schema; never user-entered |
-| `cSchemaVersion` | Text constant: `1.0` | Selects the exact schema version; never user-entered |
-| `vCaseId` | Text/ID variable | Generic Case shell ID |
-| `vBoxFolderId` | Text variable | Folder ID returned by the Toolkit; transient in Flow |
-| `fv...` variables | Apex-defined `DocGenFieldValue` | Typed descriptor for each form value |
-| `colDocGenFields` | Apex-defined collection of `DocGenFieldValue` | Complete transient value set passed to the single Apex action |
-| `vDocGenBatchId` and `vDocGenStatus` | Text variables | Non-sensitive outputs returned by Apex |
+| Resource                             | Flow type                                     | Purpose                                                       |
+| ------------------------------------ | --------------------------------------------- | ------------------------------------------------------------- |
+| `cSchemaKey`                         | Text constant: `newHire`                      | Selects an allow-listed schema; never user-entered            |
+| `cSchemaVersion`                     | Text constant: `1.0`                          | Selects the exact schema version; never user-entered          |
+| `vCaseId`                            | Text/ID variable                              | Generic Case shell ID                                         |
+| `vBoxFolderId`                       | Text variable                                 | Folder ID returned by the Toolkit; transient in Flow          |
+| `fv...` variables                    | Apex-defined `DocGenFieldValue`               | Typed descriptor for each form value                          |
+| `colDocGenFields`                    | Apex-defined collection of `DocGenFieldValue` | Complete transient value set passed to the single Apex action |
+| `vDocGenBatchId` and `vDocGenStatus` | Text variables                                | Non-sensitive outputs returned by Apex                        |
 
 All sensitive availability-for-input/output flags remain disabled. The separate status-refresh Flow may accept a Case ID after validating access; the intake Flow does not accept an existing failed Case for resubmission in this POC.
 
@@ -216,34 +219,34 @@ Use a distinct `fv...` resource for each field rather than repeatedly mutating a
 
 The v1 Flow uses the following mapping from the attached sample form. These paths are stable contract names, not Salesforce fields.
 
-| Sample form field | Example Flow component | Doc Gen path | Value type |
-| --- | --- | --- | --- |
-| Employee ID # | `inEmployeeId` | `employee.employeeId` | text |
-| Employee First Name | `inEmployeeFirstName` | `employee.firstName` | text |
-| Employee Last Name | `inEmployeeLastName` | `employee.lastName` | text |
-| Today's Date | Formula using `$Flow.CurrentDate` | `request.requestDate` | date |
-| Notification Type | Constant `newHireRehire` | `request.notificationType` | text |
-| New Region | `inRegion` | `assignment.region` | text |
-| New District | `inDistrict` | `assignment.district` | text |
-| New Station/Corporate Location | `inStation` | `assignment.station` | text |
-| Hire Date/Start Date | `inStartDate` | `assignment.startDate` | date |
-| Rehire? | `inIsRehire` | `assignment.isRehire` | boolean |
-| New Primary Title | `inPrimaryTitle` | `assignment.primaryTitle` | text |
-| Dual role? | `inIsDualRole` | `assignment.isDualRole` | boolean |
-| New Department | `inDepartment` | `assignment.department` | text |
-| New Status | `inNewStatus` | `assignment.status` | text |
-| New Manager | `inManager` | `assignment.manager` | text |
-| Full Time/PRN Status | `inEmploymentStatus` | `assignment.employmentStatus` | text |
-| Certification Level | `inCertificationLevel` | `certification.level` | text |
-| TXDSHS Certification # | `inTxdshsCertificationNumber` | `certification.txdshsNumber` | text |
-| Prior Certification #/State | `inPriorCertificationDetails` | `certification.priorStateDetails` | text |
-| Current Hourly/Salary | `inCurrentCompensation` | `compensation.currentHourlyOrSalary` | text for v1; preserves the source form's hourly/salary representation |
-| New Hire Rate Reason | `inRateReason` | `compensation.rateReason` | text |
-| Notes | `inNotes` | `notes` | text |
-| Person Completing Form | `inSubmitterName` | `submitter.name` | text |
-| Submitter Job Title | `inSubmitterJobTitle` | `submitter.jobTitle` | text |
-| Submitter Email Address | `inSubmitterEmail` | `submitter.email` | text |
-| Authorized/accurate attestation | `inAttestation` | `submitter.attested` | boolean |
+| Sample form field               | Example Flow component            | Doc Gen path                         | Value type                                                            |
+| ------------------------------- | --------------------------------- | ------------------------------------ | --------------------------------------------------------------------- |
+| Employee ID #                   | `inEmployeeId`                    | `employee.employeeId`                | text                                                                  |
+| Employee First Name             | `inEmployeeFirstName`             | `employee.firstName`                 | text                                                                  |
+| Employee Last Name              | `inEmployeeLastName`              | `employee.lastName`                  | text                                                                  |
+| Today's Date                    | Formula using `$Flow.CurrentDate` | `request.requestDate`                | date                                                                  |
+| Notification Type               | Constant `newHireRehire`          | `request.notificationType`           | text                                                                  |
+| New Region                      | `inRegion`                        | `assignment.region`                  | text                                                                  |
+| New District                    | `inDistrict`                      | `assignment.district`                | text                                                                  |
+| New Station/Corporate Location  | `inStation`                       | `assignment.station`                 | text                                                                  |
+| Hire Date/Start Date            | `inStartDate`                     | `assignment.startDate`               | date                                                                  |
+| Rehire?                         | `inIsRehire`                      | `assignment.isRehire`                | boolean                                                               |
+| New Primary Title               | `inPrimaryTitle`                  | `assignment.primaryTitle`            | text                                                                  |
+| Dual role?                      | `inIsDualRole`                    | `assignment.isDualRole`              | boolean                                                               |
+| New Department                  | `inDepartment`                    | `assignment.department`              | text                                                                  |
+| New Status                      | `inNewStatus`                     | `assignment.status`                  | text                                                                  |
+| New Manager                     | `inManager`                       | `assignment.manager`                 | text                                                                  |
+| Full Time/PRN Status            | `inEmploymentStatus`              | `assignment.employmentStatus`        | text                                                                  |
+| Certification Level             | `inCertificationLevel`            | `certification.level`                | text                                                                  |
+| TXDSHS Certification #          | `inTxdshsCertificationNumber`     | `certification.txdshsNumber`         | text                                                                  |
+| Prior Certification #/State     | `inPriorCertificationDetails`     | `certification.priorStateDetails`    | text                                                                  |
+| Current Hourly/Salary           | `inCurrentCompensation`           | `compensation.currentHourlyOrSalary` | text for v1; preserves the source form's hourly/salary representation |
+| New Hire Rate Reason            | `inRateReason`                    | `compensation.rateReason`            | text                                                                  |
+| Notes                           | `inNotes`                         | `notes`                              | text                                                                  |
+| Person Completing Form          | `inSubmitterName`                 | `submitter.name`                     | text                                                                  |
+| Submitter Job Title             | `inSubmitterJobTitle`             | `submitter.jobTitle`                 | text                                                                  |
+| Submitter Email Address         | `inSubmitterEmail`                | `submitter.email`                    | text                                                                  |
+| Authorized/accurate attestation | `inAttestation`                   | `submitter.attested`                 | boolean                                                               |
 
 The upload control is not part of this collection; supporting files go directly to Box after folder creation. Do not reproduce the sample form's “Send me a copy of my responses” behavior in v1 because that would create another copy of the sensitive response outside the approved Box workflow. A generic receipt with Case number and status is sufficient unless HR/privacy approves a separate secure-delivery design.
 
@@ -324,12 +327,14 @@ sequenceDiagram
     Apex-->>Flow: Batch ID and sanitized status
     Flow->>Flow: Clear assignable sensitive values
     Flow->>SF: Save batch ID and submission status
-    Flow-->>User: Uploader and generic receipt / Case link
+    Flow-->>User: Uploader and generic receipt
     par Supporting upload
         User->>Box: Upload directly through managed Box uploader
     and Document rendering
         Box->>Box: Generate PDF in the Case folder
     end
+    User->>Flow: Finish
+    Flow-->>User: Navigate to Experience Cloud Home
     User->>Refresh: Check document status using Case ID
     Refresh->>SF: Authorize Case and read stored batch ID
     Refresh->>Toolkit: Get Doc Gen batch status
@@ -346,17 +351,17 @@ Both the folder action and submission action must start a new transaction before
 
 Flow owns Case creation and subsequent orchestration updates. Apex submission validates and calls Box synchronously, without Case DML or serialized payload state. Folder association DML remains package-owned. Box rendering continues asynchronously after acceptance.
 
-| Outcome | Demo behavior |
-| --- | --- |
-| Form validation fails | Correct the form before creating a Case. |
-| Folder creation fails | Follow a sanitized fault path; save `Folder Failed` when possible, clear assignable values, and exit. The operator checks for a partial folder/association before a fresh submission. |
-| Validation or definite Box rejection prevents submission | Save `Doc Gen Submit Failed` with a fixed code, clear values, and exit. A fresh request requires complete re-entry after correction. |
-| Submission times out, connection fails after send, or acceptance cannot be established | Save `Submission Unknown` when possible. Do not retry automatically or offer immediate resubmission. The operator checks Box first. |
-| Box accepts, but saving the batch ID/status fails | Keep the returned opaque batch ID in the receipt if available and show `CASE_UPDATE_FAILED`. The existing Case can still show `Case Created`; do not assume a second DML attempt will succeed. The operator repairs IDs/status from Box evidence only. |
-| Box later reports generation failure | Save `Doc Gen Failed`; manual recovery may require full re-entry because Salesforce cannot reconstruct the payload. |
-| User abandons upload after acceptance | The generation job continues. Upload is optional and may be completed later from the Case page. |
+| Outcome                                                                                | Demo behavior                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Form validation fails                                                                  | Correct the form before creating a Case.                                                                                                                                                                                                               |
+| Folder creation fails                                                                  | Follow a sanitized fault path; save `Folder Failed` when possible, clear assignable values, and exit. The operator checks for a partial folder/association before a fresh submission.                                                                  |
+| Validation or definite Box rejection prevents submission                               | Save `Doc Gen Submit Failed` with a fixed code, clear values, and exit. A fresh request requires complete re-entry after correction.                                                                                                                   |
+| Submission times out, connection fails after send, or acceptance cannot be established | Save `Submission Unknown` when possible. Do not retry automatically or offer immediate resubmission. The operator checks Box first.                                                                                                                    |
+| Box accepts, but saving the batch ID/status fails                                      | Keep the returned opaque batch ID in the receipt if available and show `CASE_UPDATE_FAILED`. The existing Case can still show `Case Created`; do not assume a second DML attempt will succeed. The operator repairs IDs/status from Box evidence only. |
+| Box later reports generation failure                                                   | Save `Doc Gen Failed`; manual recovery may require full re-entry because Salesforce cannot reconstruct the payload.                                                                                                                                    |
+| User abandons upload after acceptance                                                  | The generation job continues. Upload is optional and may be completed later from the Case page.                                                                                                                                                        |
 
-Connect explicit fault paths to record and integration operations, including attempts to write error status. Terminal fault screens use fixed messages and non-sensitive identifiers only. Never copy a raw response, exception, or Flow fault message into a field, log, or receipt.
+Connect explicit fault paths to record and integration operations, including attempts to write error status. Terminal fault screens use fixed messages and non-sensitive identifiers only. Never copy a raw response, exception, or Flow fault message into a field, log, or receipt. Finish on those screens uses the same Home navigation as the receipt so the interview does not restart.
 
 Reject another submission for a Case that already has a batch ID or an incompatible integration state. Disable Previous navigation after submission. This is a basic sequential duplicate guard, not a guarantee against concurrent clicks or uncertain network outcomes. The POC uses one active submission per demo user and manual reconciliation; distributed idempotency is deferred.
 
@@ -370,34 +375,35 @@ Submission acceptance does not mean the PDF is finished. Provide a separate **Ch
 4. Perform the status callout before any Case update, with transaction control where needed. Flow owns saving the normalized result. Restrict status mutation to eligible intake Cases, retain terminal results, and do not change the submission batch ID.
 5. Map the documented response fields to the single generated document's status/output. Where the response exposes per-job entries, normalize that one job explicitly. Resolve any missing SDK property detail from the package references or class signatures during final implementation.
 
-| Box result | Case/display behavior |
-| --- | --- |
-| `pending` | `Doc Gen Submitted`; user can check again. |
-| `processing` | `Doc Gen Processing`; user can check again. |
-| `completed` with output file ID | `Document Generated`; save only that output file ID. |
-| `failed` | `Doc Gen Failed` with a fixed error code. |
-| Completed response without output details | Preserve prior state; show `DOCGEN_OUTPUT_MISSING` and allow another manual check/operator review. |
-| HTTP 400/403/404 | Preserve generation state; show a sanitized configuration/access/not-found code for operator review. A status-read failure is not proof that generation failed. |
-| HTTP 429/5xx or status-call timeout | Preserve prior state; show `DOCGEN_STATUS_UNAVAILABLE` and ask the user to check later. |
-| No stored batch ID | Explain that status cannot be checked; route an uncertain submission to manual Box inspection. |
+| Box result                                | Case/display behavior                                                                                                                                           |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pending`                                 | `Doc Gen Submitted`; user can check again.                                                                                                                      |
+| `processing`                              | `Doc Gen Processing`; user can check again.                                                                                                                     |
+| `completed` with output file ID           | `Document Generated`; save only that output file ID.                                                                                                            |
+| `failed`                                  | `Doc Gen Failed` with a fixed error code.                                                                                                                       |
+| Completed response without output details | Preserve prior state; show `DOCGEN_OUTPUT_MISSING` and allow another manual check/operator review.                                                              |
+| HTTP 400/403/404                          | Preserve generation state; show a sanitized configuration/access/not-found code for operator review. A status-read failure is not proof that generation failed. |
+| HTTP 429/5xx or status-call timeout       | Preserve prior state; show `DOCGEN_STATUS_UNAVAILABLE` and ask the user to check later.                                                                         |
+| No stored batch ID                        | Explain that status cannot be checked; route an uncertain submission to manual Box inspection.                                                                  |
 
 Never retrieve the generated content or original `user_input` for status tracking. Do not persist raw `DocGenResponse.error`, `mostRecentError`, response bodies, or stack traces. Clear a previous sanitized status-check error when a later check succeeds. There is no automatic timeout transition or background completion timestamp in this POC.
 
 ### Declarative versus custom work
 
-| Capability | Implementation |
-| --- | --- |
-| Full specified form, choices, conditional validation | Standard Screen Flow; no custom form LWC |
-| Generic Case shell and integration status writes | Intake/status Flows plus seven Case fields |
-| Folder creation and association | Existing managed Box Flow action and FRUP mapping |
-| Supporting upload and preview | Managed Box Content Uploader and Content Explorer |
-| Typed transient handoff | `DocGenFieldValue` descriptors and one collection |
-| Flexible schema and exact version selection | Two Custom Metadata Types and records |
-| Generic validation and nested JSON | Schema-neutral Apex in memory |
-| Arbitrary-payload submission | One custom invocable wrapping `POST /2.0/docgen_batches` via `box.DocGenToolkit.submitDocGenBatch` |
-| Status check | `GET /2.0/docgen_batch_jobs/{batch_id}` via managed Flow action, or a thin Apex wrapper if the normalized-output contract requires it |
-| Template alignment and schema extension proof | Manual template/tag check, rendering smoke test, and focused Apex tests |
-| Failed submissions and reset | Operator runbook; no resume UI or automatic resubmission |
+| Capability                                           | Implementation                                                                                                                                                                                                    |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full specified form, choices, conditional validation | Standard Screen Flow; no custom form LWC                                                                                                                                                                          |
+| Generic Case shell and integration status writes     | Intake/status Flows plus seven Case fields                                                                                                                                                                        |
+| Folder creation and association                      | Existing managed Box Flow action and FRUP mapping                                                                                                                                                                 |
+| Supporting upload and preview                        | Managed Box Content Uploader and Content Explorer                                                                                                                                                                 |
+| Typed transient handoff                              | `DocGenFieldValue` descriptors and one collection                                                                                                                                                                 |
+| Flexible schema and exact version selection          | Two Custom Metadata Types and records                                                                                                                                                                             |
+| Generic validation and nested JSON                   | Schema-neutral Apex in memory                                                                                                                                                                                     |
+| Arbitrary-payload submission                         | One custom invocable wrapping `POST /2.0/docgen_batches` via `box.DocGenToolkit.submitDocGenBatch`                                                                                                                |
+| Status check                                         | `GET /2.0/docgen_batch_jobs/{batch_id}` via managed Flow action, or a thin Apex wrapper if the normalized-output contract requires it                                                                             |
+| Template alignment and schema extension proof        | Manual template/tag check, rendering smoke test, and focused Apex tests                                                                                                                                           |
+| Failed submissions and reset                         | Operator runbook; no resume UI or automatic resubmission                                                                                                                                                          |
+| Finish navigation to portal Home                     | `c:hrNavigateToPortalHome` Aura Flow local action (`lightning:availableForFlowActions`); `force:navigateToURL` to the Experience `/s/` home path. Do not use an LWC here. No Case ID or request values in the URL |
 
 Locate and verify the existing `Create_Box_Folder_for_New_Case` record-triggered Flow in the target org; it is not present in the checked-in Flow inventory at this review. Exclude intake-managed Cases before activating this intake Flow so it does not race with synchronous folder creation. Inspect other Case automation that could provision folders or copy form data; modify only relevant automation during implementation.
 
@@ -407,15 +413,15 @@ Locate and verify the existing `Create_Box_Folder_for_New_Case` record-triggered
 
 Do not create `Case_Intake_Submission__c` or any replacement object that stores request data. Add these seven non-sensitive fields only where an equivalent does not already exist:
 
-| Case field | Purpose |
-| --- | --- |
-| `HR_Request_Schema_Key__c` | Contract key used for this request |
-| `HR_Request_Schema_Version__c` | Exact version selected at Case creation |
-| `HR_Integration_Status__c` | `Case Created`, `Doc Gen Submitted`, `Doc Gen Processing`, `Document Generated`, `Folder Failed`, `Doc Gen Submit Failed`, `Submission Unknown`, or `Doc Gen Failed` |
-| `HR_Intake_Managed_Provisioning__c` | Excludes the Case from competing automatic folder provisioning |
-| `Box_DocGen_Batch_Id__c` | Accepted Box batch ID |
-| `Box_DocGen_Output_File_Id__c` | Generated PDF ID after manual refresh |
-| `HR_Integration_Error_Code__c` | Allow-listed, non-sensitive error code |
+| Case field                          | Purpose                                                                                                                                                              |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HR_Request_Schema_Key__c`          | Contract key used for this request                                                                                                                                   |
+| `HR_Request_Schema_Version__c`      | Exact version selected at Case creation                                                                                                                              |
+| `HR_Integration_Status__c`          | `Case Created`, `Doc Gen Submitted`, `Doc Gen Processing`, `Document Generated`, `Folder Failed`, `Doc Gen Submit Failed`, `Submission Unknown`, or `Doc Gen Failed` |
+| `HR_Intake_Managed_Provisioning__c` | Excludes the Case from competing automatic folder provisioning                                                                                                       |
+| `Box_DocGen_Batch_Id__c`            | Accepted Box batch ID                                                                                                                                                |
+| `Box_DocGen_Output_File_Id__c`      | Generated PDF ID after manual refresh                                                                                                                                |
+| `HR_Integration_Error_Code__c`      | Allow-listed, non-sensitive error code                                                                                                                               |
 
 Use standard audit timestamps for the demo. Defer attempt/poll counters, next-poll timestamps, consecutive-error counters, output-version tracking, and dedicated completion timestamps. The Box template version remains configuration metadata and is distinct from the generated output version.
 
@@ -451,32 +457,32 @@ Create two Custom Metadata Types. These are configuration metadata, not custom b
 
 Recommended `HR_DocGen_Schema__mdt` fields are:
 
-| Field | Example | Purpose |
-| --- | --- | --- |
-| `Schema_Key__c` | `newHire` | Stable logical schema name |
-| `Version__c` | `1.0` | Exact contract version selected by the Flow |
-| `Lifecycle_Status__c` | `Active` | `Draft`, `Active`, or `Retired`; only `Active` accepts new submissions |
-| `Request_Type__c` | `New Hire/Rehire` | Non-sensitive administrative label |
-| `Box_Folder_Template_Id__c` | Opaque Box ID | Selects the folder structure; intake Flow reads this exact schema record before provisioning |
-| `Box_DocGen_Template_File_Id__c` | Opaque Box file ID | Selects the Box Doc Gen template |
-| `Box_DocGen_Template_Version_Id__c` | Opaque Box file-version ID | Pins generation and tag validation to the approved template version |
-| `Output_Type__c` | `pdf` | Restricts the output format |
-| `Output_File_Name_Pattern__c` | `HR Request - {caseNumber}` | Allows only non-sensitive tokens |
-| `Max_Payload_Bytes__c` | Approved limit | Rejects an oversized in-memory request before the callout |
+| Field                               | Example                     | Purpose                                                                                      |
+| ----------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------- |
+| `Schema_Key__c`                     | `newHire`                   | Stable logical schema name                                                                   |
+| `Version__c`                        | `1.0`                       | Exact contract version selected by the Flow                                                  |
+| `Lifecycle_Status__c`               | `Active`                    | `Draft`, `Active`, or `Retired`; only `Active` accepts new submissions                       |
+| `Request_Type__c`                   | `New Hire/Rehire`           | Non-sensitive administrative label                                                           |
+| `Box_Folder_Template_Id__c`         | Opaque Box ID               | Selects the folder structure; intake Flow reads this exact schema record before provisioning |
+| `Box_DocGen_Template_File_Id__c`    | Opaque Box file ID          | Selects the Box Doc Gen template                                                             |
+| `Box_DocGen_Template_Version_Id__c` | Opaque Box file-version ID  | Pins generation and tag validation to the approved template version                          |
+| `Output_Type__c`                    | `pdf`                       | Restricts the output format                                                                  |
+| `Output_File_Name_Pattern__c`       | `HR Request - {caseNumber}` | Allows only non-sensitive tokens                                                             |
+| `Max_Payload_Bytes__c`              | Approved limit              | Rejects an oversized in-memory request before the callout                                    |
 
 Recommended `HR_DocGen_Field__mdt` fields are:
 
-| Field | Example | Purpose |
-| --- | --- | --- |
-| `Schema__c` | Relationship to `NewHire_1_0` | Enforces the parent schema-version relationship |
-| `Json_Path__c` | `employee.firstName` | Exact allow-listed path used by Flow, Apex, and the Box template |
-| `Value_Type__c` | `text` | One of `text`, `date`, `number`, or `boolean` |
-| `Required__c` | `true` | Unconditionally requires a nonblank value; conditional-required rules belong to Flow |
-| `Max_Length__c` | `80` | Limits text before serialization |
-| `Blank_Behavior__c` | `emptyString` | One of `emptyString`, `null`, or `omit`, subject to type rules |
-| `Sequence__c` | `10` | Provides deterministic validation and assembly order |
+| Field               | Example                                       | Purpose                                                                                 |
+| ------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `Schema__c`         | Relationship to `NewHire_1_0`                 | Enforces the parent schema-version relationship                                         |
+| `Json_Path__c`      | `employee.firstName`                          | Exact allow-listed path used by Flow, Apex, and the Box template                        |
+| `Value_Type__c`     | `text`                                        | One of `text`, `date`, `number`, or `boolean`                                           |
+| `Required__c`       | `true`                                        | Unconditionally requires a nonblank value; conditional-required rules belong to Flow    |
+| `Max_Length__c`     | `80`                                          | Limits text before serialization                                                        |
+| `Blank_Behavior__c` | `emptyString`                                 | One of `emptyString`, `null`, or `omit`, subject to type rules                          |
+| `Sequence__c`       | `10`                                          | Provides deterministic validation and assembly order                                    |
 | `Allowed_Values__c` | Optional JSON array of typed permitted values | Restricts controlled values; e.g. `[true]` for attestation; never stores submitted data |
-| `Classification__c` | `PII` | Labels the kind of value expected at the path for review; it is a label only |
+| `Classification__c` | `PII`                                         | Labels the kind of value expected at the path for review; it is a label only            |
 
 Use a uniqueness convention of `Schema_Key__c + Version__c` for schema records and `Schema__c + Json_Path__c` for field records. Reject duplicates during runtime configuration loading and check the demo records in focused tests/manual review; an automated deployment gate is deferred.
 
@@ -489,17 +495,17 @@ Restrict metadata changes to the setup/deployment operator and grant runtime acc
 
 #### What is persisted and what is transient
 
-| Artifact | Contains PII or sensitive HR data? | Location and lifetime |
-| --- | --- | --- |
-| Schema definition and field rules | No | Custom Metadata records in each Salesforce org and metadata XML in source control; retained as configuration history |
-| Flow schema key/version constants | No | Flow definition metadata; fixed for that activated Flow version |
-| Schema key/version used for a request | No | `Case.HR_Request_Schema_Key__c` and `Case.HR_Request_Schema_Version__c`; retained for audit and support |
-| Box Doc Gen template and tags | No request instance values | Versioned Word/Doc Gen template in Box; tags correspond to the schema paths |
-| `DocGenFieldValue` collection | Yes | Intended transient Flow state; clear assignable entries after handoff and verify failure-state behavior as described above |
-| Nested `user_input` object and serialized request JSON | Yes | Apex heap and outbound `POST /2.0/docgen_batches` body only on the Salesforce side; never inserted, cached, logged, or enqueued in Salesforce |
-| Box Doc Gen submitted input | Yes | Received and processed by Box under the tenant's Box Doc Gen data-handling and retention terms; confirm those terms during privacy review |
-| Generated PDF and supporting uploads | Yes | Case folder in Box under approved HR retention, access, legal-hold, and deletion policies |
-| Folder association, batch ID, status, and output file ID | No | Box-managed `box__FRUP__c` and the approved Case orchestration fields |
+| Artifact                                                 | Contains PII or sensitive HR data? | Location and lifetime                                                                                                                         |
+| -------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Schema definition and field rules                        | No                                 | Custom Metadata records in each Salesforce org and metadata XML in source control; retained as configuration history                          |
+| Flow schema key/version constants                        | No                                 | Flow definition metadata; fixed for that activated Flow version                                                                               |
+| Schema key/version used for a request                    | No                                 | `Case.HR_Request_Schema_Key__c` and `Case.HR_Request_Schema_Version__c`; retained for audit and support                                       |
+| Box Doc Gen template and tags                            | No request instance values         | Versioned Word/Doc Gen template in Box; tags correspond to the schema paths                                                                   |
+| `DocGenFieldValue` collection                            | Yes                                | Intended transient Flow state; clear assignable entries after handoff and verify failure-state behavior as described above                    |
+| Nested `user_input` object and serialized request JSON   | Yes                                | Apex heap and outbound `POST /2.0/docgen_batches` body only on the Salesforce side; never inserted, cached, logged, or enqueued in Salesforce |
+| Box Doc Gen submitted input                              | Yes                                | Received and processed by Box under the tenant's Box Doc Gen data-handling and retention terms; confirm those terms during privacy review     |
+| Generated PDF and supporting uploads                     | Yes                                | Case folder in Box under approved HR retention, access, legal-hold, and deletion policies                                                     |
+| Folder association, batch ID, status, and output file ID | No                                 | Box-managed `box__FRUP__c` and the approved Case orchestration fields                                                                         |
 
 The Case's saved key/version is only an audit pointer to the definition that was used. It is not enough to reconstruct a request because neither the schema metadata nor the Case contains the submitted values.
 
@@ -521,52 +527,52 @@ Synthetic `newHire/1.0` `user_input` (all 26 mapped paths plus server-generated 
 
 ```json
 {
-  "schema": {
-    "key": "newHire",
-    "version": "1.0"
-  },
-  "case": {
-    "id": "500gK00000EXAMPLE",
-    "caseNumber": "00001042"
-  },
-  "request": {
-    "requestDate": "2026-09-09",
-    "notificationType": "newHireRehire"
-  },
-  "employee": {
-    "employeeId": "E-10042",
-    "firstName": "Jordan",
-    "lastName": "Rivera"
-  },
-  "assignment": {
-    "region": "Central",
-    "district": "District 4",
-    "station": "Station 12",
-    "startDate": "2026-10-05",
-    "isRehire": false,
-    "primaryTitle": "Paramedic",
-    "isDualRole": false,
-    "department": "Operations",
-    "status": "New Hire",
-    "manager": "Alex Morgan",
-    "employmentStatus": "Full Time"
-  },
-  "certification": {
-    "level": "EMT-Paramedic",
-    "txdshsNumber": "TX-88421",
-    "priorStateDetails": "NM-44109"
-  },
-  "compensation": {
-    "currentHourlyOrSalary": "Above minimum",
-    "rateReason": "Market adjustment"
-  },
-  "notes": "Synthetic demo notes.\nInclude a second line to check multiline rendering.",
-  "submitter": {
-    "name": "Sam Patel",
-    "jobTitle": "Operations Supervisor",
-    "email": "sam.patel@example.test",
-    "attested": true
-  }
+    "schema": {
+        "key": "newHire",
+        "version": "1.0"
+    },
+    "case": {
+        "id": "500gK00000EXAMPLE",
+        "caseNumber": "00001042"
+    },
+    "request": {
+        "requestDate": "2026-09-09",
+        "notificationType": "newHireRehire"
+    },
+    "employee": {
+        "employeeId": "E-10042",
+        "firstName": "Jordan",
+        "lastName": "Rivera"
+    },
+    "assignment": {
+        "region": "Central",
+        "district": "District 4",
+        "station": "Station 12",
+        "startDate": "2026-10-05",
+        "isRehire": false,
+        "primaryTitle": "Paramedic",
+        "isDualRole": false,
+        "department": "Operations",
+        "status": "New Hire",
+        "manager": "Alex Morgan",
+        "employmentStatus": "Full Time"
+    },
+    "certification": {
+        "level": "EMT-Paramedic",
+        "txdshsNumber": "TX-88421",
+        "priorStateDetails": "NM-44109"
+    },
+    "compensation": {
+        "currentHourlyOrSalary": "Above minimum",
+        "rateReason": "Market adjustment"
+    },
+    "notes": "Synthetic demo notes.\nInclude a second line to check multiline rendering.",
+    "submitter": {
+        "name": "Sam Patel",
+        "jobTitle": "Operations Supervisor",
+        "email": "sam.patel@example.test",
+        "attested": true
+    }
 }
 ```
 
@@ -610,7 +616,7 @@ Coding for the transient submission/status Apex is complete and prefixed `MyBox_
 - Supporting metadata added so the Apex compiles/deploys: the seven Case fields, the `HR_DocGen_Schema__mdt`/`HR_DocGen_Field__mdt` Custom Metadata Types, the complete `newHire/1.0` field mapping (`Lifecycle_Status__c = Draft`; source XML has `Box_DocGen_Template_File_Id__c` = `2456566806586` and `Box_DocGen_Template_Version_Id__c` = `2724134783386`; activation still chunk 6), and a `MyBox_HR_DocGen_Access` permission set granting FLS on the seven Case fields (required because `WITH SECURITY_ENFORCED` throws otherwise; deploying a field via Metadata API alone does not grant FLS to any profile).
 - Verified directly against the installed package (`Box for Salesforce 5.56.0.1`) in the target dev org rather than assumed from public docs: `box.DocGenRequest`/`box.DocGenResponse`/`box.DocGenToolkit`/`box.Toolkit` method and property signatures used above. Mapping to the correct REST APIs: `submitDocGenBatch` → [`POST /2.0/docgen_batches`](https://developer.box.com/reference/v2025.0/post-docgen-batches); `getDocGenBatch` → [`GET /2.0/docgen_batch_jobs/{batch_id}`](https://developer.box.com/reference/v2025.0/get-docgen-batch-jobs-id). `box.DocGenRequest` has no `input_source` property — only `file`, `file_version`, `destination_folder`, `output_type`, and `document_generation_data` (a `List` of one entry with `generated_file_name`/`user_input`). The REST body still requires `input_source: "api"`; the Toolkit sets that when it calls `POST /2.0/docgen_batches`.
 - Test coverage: `MyBox_DocGenSchemaServiceTest` covers the full validator (missing required, unknown/duplicate/reserved/invalid-syntax paths, type mismatch, length, allowed-values, scalar/object path collision, payload-too-large, boolean-false-is-a-value, omit/emptyString blank handling) entirely against in-memory metadata, with no deployed-record dependency. `MyBox_GetCaseDocGenStatusTest` covers all documented status outcomes. `MyBox_SubmitTransientCaseDocGenTest` covers every Case/folder authorization guard.
-- **Outstanding/blocked:** three `MyBox_SubmitTransientCaseDocGenTest` cases (the full success path, the Box-definite-rejection path, and the callout-exception path) exercise `loadActiveSchema`, which requires a deployed, Active schema record. Deploying *any* `CustomMetadata` record (including a disposable probe record with no relation to this feature) to the target dev org currently fails org-side with `UNKNOWN_EXCEPTION` from the Metadata API, while deploying the Custom Metadata Type definitions themselves succeeds — this reproduces even for a brand-new, unrelated custom metadata type, so it is a platform/org limitation, not a defect in these files. The `HR_DocGen_Schema.MyBox_Test_Harness_1_0` / `..._Tiny_1_0` / `..._Collision_1_0` records under `customMetadata/` are authored and ready to deploy once that is resolved (or created manually via Setup). Chunk 2/6 activation of the real `newHire/1.0` record is unaffected since it was always scheduled for chunk 6, not this pass.
+- **Outstanding/blocked:** three `MyBox_SubmitTransientCaseDocGenTest` cases (the full success path, the Box-definite-rejection path, and the callout-exception path) exercise `loadActiveSchema`, which requires a deployed, Active schema record. Deploying _any_ `CustomMetadata` record (including a disposable probe record with no relation to this feature) to the target dev org currently fails org-side with `UNKNOWN_EXCEPTION` from the Metadata API, while deploying the Custom Metadata Type definitions themselves succeeds — this reproduces even for a brand-new, unrelated custom metadata type, so it is a platform/org limitation, not a defect in these files. The `HR_DocGen_Schema.MyBox_Test_Harness_1_0` / `..._Tiny_1_0` / `..._Collision_1_0` records under `customMetadata/` are authored and ready to deploy once that is resolved (or created manually via Setup). Chunk 2/6 activation of the real `newHire/1.0` record is unaffected since it was always scheduled for chunk 6, not this pass.
 - Not built in this pass (explicitly out of scope at the time): the Screen Flows (chunks 4/7; later completed as Draft), the `newHire/1.1` extension metadata (chunk 7), and Experience Cloud/permission wiring for end users (chunk 6). Chunk 2 Word template is file `2456566806586` / version `2724134783386` (operator-tested 9 Sep 2026); Toolkit service-account Doc Gen REST access remains outstanding. Per-field `Required__c`/`Max_Length__c` values for the real `newHire/1.0` mapping were deliberately left at generic defaults (`Required__c = false` except `submitter.attested`, `Blank_Behavior__c = omit`, no length caps) rather than invented business rules; the source-PDF-driven field checklist remains chunk 1's `docs/hr_request_demo_contract.md` deliverable.
 
 ### Experience user and folder access
@@ -625,17 +631,17 @@ Preconfigure the demo users and sharing before the main demo; automatic user pro
 
 Use synthetic inputs only. These checks support the demo requirements; no volume, scheduler, webhook, or production release-management suite is required.
 
-| Area | Required evidence |
-| --- | --- |
-| Full form | Every source-form field appears in the checklist, Flow, mapping, and rendered PDF. Required fields, attestation, and known conditional rules behave correctly. Hidden stale values are excluded or blanked. |
-| Mapping and value handling | Our Flow assignments and generic validator preserve field identity, zero, false, quotes, Unicode, newlines, and configured null/omit behavior. Test these application rules in the final implementation; no standalone Salesforce type-support or Box JSON-acceptance test. |
-| Generic validation | Focused Apex tests cover missing required values; unknown/inactive/duplicate schema configuration; unknown/duplicate/colliding/reserved paths; wrong types; invalid allowed values; and field/payload limits. Use callout mocks/test seams appropriate to the package. |
-| Schema flexibility | Full `1.0` works; `1.1` adds and renders `request.referenceNote` with no Apex changes. `1.0` rejects that extension. Existing Case schema pointers remain correct. |
-| Transactions and provisioning | Live Experience execution crosses both callout boundaries without uncommitted-work errors. Exactly one Case folder/association is created; competing Case automation is excluded. |
-| Content and status | PDF appears in the correct folder; supporting upload creates no Salesforce `ContentVersion`; manual refresh handles processing, generated, failed, missing-output, and unavailable-status cases. No raw response reaches Flow persistence or UI. |
-| Failure recovery | Exercise a definite rejection, a mocked ambiguous submission, and a Case-update failure after acceptance. No automatic resubmission occurs; returned opaque IDs support manual recovery when available. Fault handling itself can exit safely if status DML fails. |
-| Access | Actual Experience user A can submit, upload, preview, and refresh. User B cannot access A's Case/folder. Substituting another folder or Case ID is rejected. |
-| Storage boundary | Check Cases, custom objects, Files, Notes, Tasks, events, async state, failed interviews, error emails, logs, and package diagnostics for synthetic marker values. No request-storage object is introduced. Record anything not observable rather than claiming a universal guarantee. |
+| Area                          | Required evidence                                                                                                                                                                                                                                                                      |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full form                     | Every source-form field appears in the checklist, Flow, mapping, and rendered PDF. Required fields, attestation, and known conditional rules behave correctly. Hidden stale values are excluded or blanked.                                                                            |
+| Mapping and value handling    | Our Flow assignments and generic validator preserve field identity, zero, false, quotes, Unicode, newlines, and configured null/omit behavior. Test these application rules in the final implementation; no standalone Salesforce type-support or Box JSON-acceptance test.            |
+| Generic validation            | Focused Apex tests cover missing required values; unknown/inactive/duplicate schema configuration; unknown/duplicate/colliding/reserved paths; wrong types; invalid allowed values; and field/payload limits. Use callout mocks/test seams appropriate to the package.                 |
+| Schema flexibility            | Full `1.0` works; `1.1` adds and renders `request.referenceNote` with no Apex changes. `1.0` rejects that extension. Existing Case schema pointers remain correct.                                                                                                                     |
+| Transactions and provisioning | Live Experience execution crosses both callout boundaries without uncommitted-work errors. Exactly one Case folder/association is created; competing Case automation is excluded.                                                                                                      |
+| Content and status            | PDF appears in the correct folder; supporting upload creates no Salesforce `ContentVersion`; manual refresh handles processing, generated, failed, missing-output, and unavailable-status cases. No raw response reaches Flow persistence or UI.                                       |
+| Failure recovery              | Exercise a definite rejection, a mocked ambiguous submission, and a Case-update failure after acceptance. No automatic resubmission occurs; returned opaque IDs support manual recovery when available. Fault handling itself can exit safely if status DML fails.                     |
+| Access                        | Actual Experience user A can submit, upload, preview, and refresh. User B cannot access A's Case/folder. Substituting another folder or Case ID is rejected.                                                                                                                           |
+| Storage boundary              | Check Cases, custom objects, Files, Notes, Tasks, events, async state, failed interviews, error emails, logs, and package diagnostics for synthetic marker values. No request-storage object is introduced. Record anything not observable rather than claiming a universal guarantee. |
 
 Run Apex tests needed for the changed classes and the deployment target. For the form and managed UI Elements, use the actual Experience site to check our assembled workflow, authorization configuration, and template rendering. Documented platform capabilities are design inputs, not separate feasibility gates.
 
@@ -647,17 +653,17 @@ Before assigning a chunk, supply the target Salesforce alias/site, approved Box 
 
 ### Dependency and ownership map
 
-| Chunk | Deliverable | Depends on | Primary ownership |
-| --- | --- | --- | --- |
-| 0 | Environment configuration readiness | None | Setup notes and non-secret configuration checklist; no new Apex or Flow |
-| 1 | Field checklist, DTO contract, metadata foundations | None | Final DTO definition, Case fields, metadata types, `1.0` records |
-| 2 | Full-form Box template | 1; Box access from 0 for publication | Box template and template manifest |
-| 3 | Generic validator and submission action | 1 | Submission/validation Apex and focused tests |
-| 4 | Complete intake Flow | 1 | Main intake Flow and mapping checklist results |
-| 5 | Manual status action | 1 | Separate status Flow and optional status wrapper/tests |
-| 6 | Experience integration and first end-to-end run | 0, 2, 3, 4, 5 | Site/page configuration, permissions, scoped provisioning exclusion |
-| 7 | Schema-extension demonstration | 6 | `1.1` records, extension Flow copy, template extension |
-| 8 | Acceptance verification and presenter runbook | 7 | Test evidence, recovery/reset and demo instructions |
+| Chunk | Deliverable                                         | Depends on                           | Primary ownership                                                       |
+| ----- | --------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------- |
+| 0     | Environment configuration readiness                 | None                                 | Setup notes and non-secret configuration checklist; no new Apex or Flow |
+| 1     | Field checklist, DTO contract, metadata foundations | None                                 | Final DTO definition, Case fields, metadata types, `1.0` records        |
+| 2     | Full-form Box template                              | 1; Box access from 0 for publication | Box template and template manifest                                      |
+| 3     | Generic validator and submission action             | 1                                    | Submission/validation Apex and focused tests                            |
+| 4     | Complete intake Flow                                | 1                                    | Main intake Flow and mapping checklist results                          |
+| 5     | Manual status action                                | 1                                    | Separate status Flow and optional status wrapper/tests                  |
+| 6     | Experience integration and first end-to-end run     | 0, 2, 3, 4, 5                        | Site/page configuration, permissions, scoped provisioning exclusion     |
+| 7     | Schema-extension demonstration                      | 6                                    | `1.1` records, extension Flow copy, template extension                  |
+| 8     | Acceptance verification and presenter runbook       | 7                                    | Test evidence, recovery/reset and demo instructions                     |
 
 Chunks 0 and 1 can start in parallel. Chunk 1 uses the documented types and does not wait for an environment experiment; records awaiting environment IDs remain Draft. Chunks 2–5 can proceed in parallel after chunk 1 freezes the interfaces; Box-side publication in chunk 2 requires the relevant access/configuration from chunk 0. Chunk 4 can build an inactive Flow against the agreed action contract; connecting/deploying its action reference waits for chunk 3. Chunk 6 owns shared-org integration and deployment ordering after those owners finish. Chunk 7 edits only extension artifacts and explicitly coordinated configuration values. Do not let multiple agents edit the same Flow, metadata record, or permission set concurrently.
 
@@ -722,11 +728,11 @@ Chunks 0 and 1 can start in parallel. Chunk 1 uses the documented types and does
 - Build `HR_New_Hire_Intake` with standard components, section layout, the agreed choice lists, full validation, and true-only attestation.
 - Implement generic Case creation and exact-schema configuration lookup, folder creation, both transaction boundaries, and section-based descriptor assignments.
 - Invoke the submission action once; handle all relevant faults and save only approved orchestration outputs.
-- Clear assignable sensitive state, disable Previous after submission, and provide the Box uploader, generic receipt, and Case link. Make uploads optional for completion while retaining the control.
+- Clear assignable sensitive state, disable Previous after submission, and provide the Box uploader, generic receipt, and Case link. Make uploads optional for completion while retaining the control. On Finish from the receipt and terminal fault screens, call `c:hrNavigateToPortalHome` so the user returns to Experience Cloud Home instead of restarting the interview.
 
-**Deliverables:** Inactive Flow metadata and completed mapping checklist. Any required action reference waits for chunk 3 deployment.
+**Deliverables:** Inactive Flow metadata, `c:hrNavigateToPortalHome` Aura local action, and completed mapping checklist. Any required Apex action reference waits for chunk 3 deployment.
 
-**Done when:** Every field maps exactly once, conditional values are cleared correctly, both transaction settings are explicit, and success/failure paths meet the contract. No partial form, custom LWC, retry loop, or extra payload fields on Case.
+**Done when:** Every field maps exactly once, conditional values are cleared correctly, both transaction settings are explicit, Finish returns to portal Home, and success/failure paths meet the contract. No partial form, custom form LWC, retry loop, or extra payload fields on Case.
 
 ### Chunk 5 — Build manual status refresh
 
@@ -745,7 +751,7 @@ Chunks 0 and 1 can start in parallel. Chunk 1 uses the documented types and does
 
 **Goal:** Join the completed components into one working user journey.
 
-- Apply verified environment/template IDs, deploy foundations and Apex before dependent Flows, and configure the actual Experience page and receipt navigation.
+- Apply verified environment/template IDs, deploy foundations and Apex before dependent Flows, and configure the actual Experience page and receipt navigation. Finish on `HR_New_Hire_Intake` must land on Home via `c:hrNavigateToPortalHome`, not a new interview on `/hr-request`.
 - Configure scoped Flow/Apex/Case permissions and the chosen Case/Box access mechanism for two synthetic users.
 - Apply the intake exclusion to the verified existing folder-provisioning automation before activating the intake Flow.
 - Add the managed uploader/explorer with requested preview/upload/download settings and disabled delete/rename/share/folder-creation controls.
